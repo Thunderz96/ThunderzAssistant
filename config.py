@@ -55,6 +55,8 @@ DASHBOARD_TASKS_FILE = "dashboard_tasks.json"  # File to store quick tasks
 NEWS_API_KEY = "816d0787df7c434fa06f8a2327beb8d6"  # Replace with your actual NewsAPI.org key
 
 # Future module settings can be added here as you expand the application
+# Stock Monitor Module settings are defined in stock_monitor_module.py, but you can add global settings here if needed.
+
 
 # Developer Mode
-DEBUG_MODE = False  # Set to True to enable debug messages
+DEBUG_MODE = True  # Set to True to enable debug messages

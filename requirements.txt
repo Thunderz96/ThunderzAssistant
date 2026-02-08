@@ -10,3 +10,8 @@ psutil>=5.9.0
 # For GPU monitoring (NVIDIA graphics cards)
 # Official NVIDIA library - works with Python 3.13+
 pynvml>=11.5.0
+
+# For stock market data retrieval
+yfinance>=0.2.79
+matplotlib>=3.7.0  # For plotting stock data
+

@@ -23,6 +23,7 @@ from dashboard_module import DashboardModule
 from news_module import NewsModule
 from pomodoro_module import PomodoroModule
 from system_monitor_module import SystemMonitorModule
+from stock_monitor_module import StockMonitorModule  
 
 
 class ThunderzAssistant:
@@ -198,7 +199,22 @@ class ThunderzAssistant:
             command=self.show_system_monitor
         )
         monitor_btn.pack(fill=tk.X, padx=10, pady=5)
-        
+
+        # Stock Monitor button
+        stock_monitor_btn = tk.Button(
+            sidebar,
+            text="📈  Stock Monitor",
+            font=("Arial", 12),
+            bg=self.colors['card_bg'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_hover'],
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
+            command=self.show_stock_monitor
+        )
+        stock_monitor_btn.pack(fill=tk.X, padx=10, pady=5)
+                
         # Content area (where modules will be displayed)
         self.content_frame = tk.Frame(main_container, bg=self.colors['content_bg'], relief=tk.RAISED, borderwidth=2)
         self.content_frame.pack(fill=tk.BOTH, expand=True, side=tk.RIGHT)
@@ -300,6 +316,16 @@ class ThunderzAssistant:
         """
         self.clear_content()
         monitor_module = SystemMonitorModule(self.content_frame, self.colors)
+    
+    def show_stock_monitor(self):
+        """
+        Display the stock monitor module in the content area.
+        
+        This method clears the current content and loads the stock monitoring module.
+        """
+        self.clear_content()
+        stock_monitor_module = StockMonitorModule(self.content_frame, self.colors)
+
 
     def clear_content(self):
         """
