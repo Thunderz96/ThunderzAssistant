@@ -128,12 +128,62 @@ class WeatherModule:
         )
         info_label.pack(pady=5)
     
+    def _try_ipapi_co(self):
+        """
+        Try to detect location using ipapi.co (primary service).
+        
+        Returns:
+            str: City name if detected, empty string otherwise.
+        
+        Raises:
+            Exception: If the request fails or service returns an error.
+        """
+        location_url = "https://ipapi.co/json/"
+        location_response = requests.get(location_url, timeout=5)
+        location_response.raise_for_status()
+        location_data = location_response.json()
+        
+        # Check for error responses (e.g. rate limiting)
+        if location_data.get('error'):
+            reason = location_data.get('reason', 'Unknown error')
+            raise Exception(f"ipapi.co error: {reason}")
+        
+        city = location_data.get('city', '')
+        if not city:
+            city = location_data.get('region', location_data.get('country_name', ''))
+        return city
+    
+    def _try_ip_api_com(self):
+        """
+        Try to detect location using ip-api.com (fallback service).
+        
+        Returns:
+            str: City name if detected, empty string otherwise.
+        
+        Raises:
+            Exception: If the request fails or service returns an error.
+        """
+        location_url = "http://ip-api.com/json/?fields=status,message,city,regionName,country"
+        location_response = requests.get(location_url, timeout=5)
+        location_response.raise_for_status()
+        location_data = location_response.json()
+        
+        if location_data.get('status') == 'fail':
+            reason = location_data.get('message', 'Unknown error')
+            raise Exception(f"ip-api.com error: {reason}")
+        
+        city = location_data.get('city', '')
+        if not city:
+            city = location_data.get('regionName', location_data.get('country', ''))
+        return city
+    
     def auto_detect_and_show_weather(self):
         """
         Automatically detect the user's location and show weather.
         
         This uses IP-based geolocation to determine the approximate city,
         then fetches and displays the weather for that location.
+        Tries ipapi.co first, then falls back to ip-api.com.
         """
         try:
             # Show loading message
@@ -148,19 +198,21 @@ class WeatherModule:
             loading_label.pack(pady=20)
             self.parent.update()
             
-            # Use ipapi.co to get location from IP address (free, no API key)
-            # This gives us the city based on internet connection
-            location_url = "https://ipapi.co/json/"
-            location_response = requests.get(location_url, timeout=5)
-            location_response.raise_for_status()
-            location_data = location_response.json()
+            city = ''
+            error_details = []
             
-            # Extract city name
-            city = location_data.get('city', '')
+            # Primary: try ipapi.co
+            try:
+                city = self._try_ipapi_co()
+            except Exception as e:
+                error_details.append(f"Primary (ipapi.co): {e}")
             
+            # Fallback: try ip-api.com if primary failed
             if not city:
-                # Fallback: use region or country if city not available
-                city = location_data.get('region', location_data.get('country_name', ''))
+                try:
+                    city = self._try_ip_api_com()
+                except Exception as e:
+                    error_details.append(f"Fallback (ip-api.com): {e}")
             
             if city:
                 # Update the entry field with detected city
@@ -171,9 +223,12 @@ class WeatherModule:
                 self.get_weather(auto_detected=True)
             else:
                 self.clear_results()
+                error_msg = "Could not detect your location.\nPlease enter a city manually."
+                if error_details:
+                    error_msg += "\n\nDetails:\n" + "\n".join(error_details)
                 error_label = tk.Label(
                     self.result_frame,
-                    text="Could not detect your location.\nPlease enter a city manually.",
+                    text=error_msg,
                     font=("Arial", 12),
                     bg="white",
                     fg="orange",
@@ -181,12 +236,12 @@ class WeatherModule:
                 )
                 error_label.pack(pady=20)
                 
-        except requests.exceptions.RequestException:
-            # If auto-detection fails, just show a message but don't crash
+        except Exception as e:
+            # Catch-all so the app never crashes
             self.clear_results()
             error_label = tk.Label(
                 self.result_frame,
-                text="Could not auto-detect location.\nPlease enter a city manually.",
+                text=f"Could not auto-detect location.\nPlease enter a city manually.\n\nError: {e}",
                 font=("Arial", 12),
                 bg="white",
                 fg="orange",
