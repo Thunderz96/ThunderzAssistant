@@ -38,5 +38,8 @@ Thumbs.db
 desktop.ini
 
 # Project specific
+config.py              # Contains actual API keys - NEVER commit this!
 config_local.py
 *.log
+dashboard_tasks.json   # User's personal tasks
+check_git.bat          # Temporary helper script

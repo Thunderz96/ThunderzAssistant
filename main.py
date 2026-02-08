@@ -11,6 +11,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import sys
 import os
+import config  # Import the config module for API keys
+
 
 # Add the modules directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
@@ -18,6 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
 # Import modules
 from weather_module import WeatherModule
 from dashboard_module import DashboardModule
+from news_module import NewsModule
 
 
 class ThunderzAssistant:
@@ -39,6 +42,29 @@ class ThunderzAssistant:
         self.root.title("Thunderz Assistant v1.2.0")
         self.root.geometry("900x650")
         
+        # Load API keys from config
+        self.api_key = config.NEWS_API_KEY  # News API key
+        
+        # Error Handling if API key is missing or not set
+        if not self.api_key or self.api_key == "YOUR_API_KEY_HERE":
+            messagebox.showwarning(
+                "News API Key Missing", 
+                "News API key not configured.\n\n"
+                "To enable the News feature:\n"
+                "1. Get a free API key from https://newsapi.org/register\n"
+                "2. Open config.py\n"
+                "3. Replace 'YOUR_API_KEY_HERE' with your actual key\n\n"
+                "Dashboard and Weather will still work!"
+            )
+            # Don't destroy the app, just disable news feature
+            self.api_key = None
+            
+        
+
+        
+
+
+     
         # Blue color scheme
         self.colors = {
             'primary': '#1E3A8A',      # Deep blue
@@ -107,7 +133,22 @@ class ThunderzAssistant:
             command=self.show_dashboard
         )
         dashboard_btn.pack(fill=tk.X, padx=10, pady=5)
-        
+
+        # News button
+        news_btn = tk.Button(
+            sidebar,
+            text="📰  Breaking News",
+            font=("Arial", 12),
+            bg=self.colors['accent'],
+            fg="white",
+            activebackground=self.colors['button_hover'],
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
+            command=self.show_news
+        )
+        news_btn.pack(fill=tk.X, padx=10, pady=5)
+                       
         # Weather button
         weather_btn = tk.Button(
             sidebar,
@@ -175,7 +216,38 @@ class ThunderzAssistant:
         
         # Create and display the weather module
         weather_module = WeatherModule(self.content_frame, self.colors)
+    
+    def show_news(self):
+        """
+        Display the news module in the content area.
         
+        This method clears the current content and loads the breaking news module.
+        """
+        self.clear_content()
+        
+        # Check if API key is configured
+        if not self.api_key:
+            error_label = tk.Label(
+                self.content_frame,
+                text="📰 News Feature Not Available\n\n"
+                     "To enable breaking news:\n"
+                     "1. Get a free API key from:\n"
+                     "   https://newsapi.org/register\n\n"
+                     "2. Open config.py and add your key to:\n"
+                     "   NEWS_API_KEY = 'your_key_here'\n\n"
+                     "3. Restart the application",
+                font=("Arial", 12),
+                bg="white",
+                fg=self.colors['text'],
+                justify=tk.CENTER
+            )
+            error_label.pack(pady=50)
+            return
+        
+        # Create and display the news module
+        news_module = NewsModule(self.api_key, self.content_frame, self.colors)   
+        news_module.display_news()
+
     def clear_content(self):
         """
         Clear all widgets from the content area.

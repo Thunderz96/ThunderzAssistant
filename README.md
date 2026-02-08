@@ -42,13 +42,24 @@ Get real-time weather information for any city worldwide:
 
 1. **Clone or Download** this project to your computer
 
-2. **Install Required Packages**
+2. **Set Up Configuration File**
+   ```bash
+   # Copy the example config
+   copy config.example.py config.py
+   
+   # Then open config.py and add your API keys
+   # For News feature, get a free key from: https://newsapi.org/register
+   ```
+   
+   **Important:** Never commit `config.py` to GitHub! It's already in `.gitignore`.
+
+3. **Install Required Packages**
    Open a terminal/command prompt in the project directory and run:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run the Application**
+4. **Run the Application**
    ```bash
    python main.py
    ```
