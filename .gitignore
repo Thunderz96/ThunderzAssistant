@@ -42,4 +42,5 @@ config.py              # Contains actual API keys - NEVER commit this!
 config_local.py
 *.log
 dashboard_tasks.json   # User's personal tasks
+pomodoro_stats.json    # User's personal pomodoro statistics
 check_git.bat          # Temporary helper script

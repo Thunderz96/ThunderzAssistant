@@ -1,5 +1,12 @@
 # Thunderz Assistant - Python Dependencies
 # Install these with: pip install -r requirements.txt
 
-# For making HTTP requests to weather API
+# For making HTTP requests to weather API and news API
 requests>=2.31.0
+
+# For system resource monitoring (CPU, RAM, disk, processes)
+psutil>=5.9.0
+
+# For GPU monitoring (NVIDIA graphics cards)
+# Official NVIDIA library - works with Python 3.13+
+pynvml>=11.5.0

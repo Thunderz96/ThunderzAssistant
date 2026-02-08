@@ -1,189 +1,284 @@
 # ⚡ Thunderz Assistant
 
-A modular, all-in-one GUI application built with Python. Think of it as a Swiss Army knife for productivity tools!
+A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, and workflow optimization!
 
-## Version
-Current Version: **1.2.0**
+---
 
-## Features
+## 🎯 Current Version: **1.3.2**
 
-### 📊 Daily Dashboard (Default Home Screen)
-Your daily command center that greets you every time you open the app:
-- ⚡ **Smart greeting** based on time of day (Good Morning/Afternoon/Evening/Night)
-- 🕐 **Live clock** that updates every second
+---
+
+## ✨ Features
+
+### 📊 Dashboard (Home Screen)
+Your daily command center:
+- ⏰ **Live clock** with time-based greetings
 - 📅 **Current date** display
-- 🌤️ **Weather summary** with automatic location detection
-- 💡 **Daily motivational quote** that changes each day (30+ quotes)
-- ✅ **Quick Tasks** — add, check off, and clear completed tasks
-  - Tasks persist between sessions (saved locally)
+- 🌤️ **Weather summary** with auto-location
+- 💡 **Daily motivational quote** (30+ quotes)
+- ✅ **Quick Tasks** with persistence
+
+### 🍅 Pomodoro Timer
+Focus timer using the Pomodoro Technique:
+- ⏱️ **25-minute work sessions**
+- ☕ **5-minute short breaks**
+- 🌴 **15-minute long breaks** (after 4 pomodoros)
+- 📊 **Daily tracking** with statistics
+- 🔔 **Sound notifications**
+
+### 💻 System Monitor
+Real-time computer stats:
+- 🔥 **CPU usage** (total + per-core)
+- 🧠 **RAM usage** with progress bars
+- 💾 **All storage drives** (not just C:)
+- ⚡ **Top 5 CPU processes**
+- 🧠 **Top 5 RAM processes**
+- 🎮 **GPU monitoring** (NVIDIA cards)
+- ⏱️ **System uptime**
 
 ### 🌤️ Weather Checker
-Get real-time weather information for any city worldwide:
-- 🌍 **Automatic location detection** with fallback service
-- 📍 **"My Location" button** to quickly refresh your local weather
-- Temperature (Celsius and Fahrenheit)
-- Weather conditions, humidity, wind speed, visibility, UV Index
+Real-time weather for any city:
+- 🌍 **Auto-location detection**
+- 📍 **"My Location" button**
+- 🌡️ **Temperature** (°C and °F)
+- 💨 **Wind, humidity, UV index**
 
-### Future Module Ideas
-- Habit tracker
-- Note-taking tool
-- Unit converter
-- File organizer
-- Timer/Stopwatch
-- And more!
+### 📰 Breaking News
+Top headlines (requires free API key):
+- 📱 **Top 5 news stories**
+- 🔗 **Clickable article links**
+- 🎨 **Card-style layout**
 
-## Installation
+---
 
-### Prerequisites
-- Python 3.7 or higher
-- pip (Python package installer)
+## 🚀 Quick Start
 
-### Setup Steps
+### 1. Install Python
+Python 3.7+ required. [Download here](https://www.python.org/downloads/)
 
-1. **Clone or Download** this project to your computer
+### 2. Install Dependencies
+```bash
+cd ThunderzAssistant
+pip install -r requirements.txt
+```
 
-2. **Set Up Configuration File**
-   ```bash
-   # Copy the example config
-   copy config.example.py config.py
-   
-   # Then open config.py and add your API keys
-   # For News feature, get a free key from: https://newsapi.org/register
-   ```
-   
-   **Important:** Never commit `config.py` to GitHub! It's already in `.gitignore`.
+### 3. Configure API Keys (Optional)
+```bash
+# Copy the template
+copy config.example.py config.py
 
-3. **Install Required Packages**
-   Open a terminal/command prompt in the project directory and run:
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Edit config.py and add your News API key
+# Get free key at: https://newsapi.org/register
+```
 
-4. **Run the Application**
-   ```bash
-   python main.py
-   ```
+**Important:** `config.py` is gitignored for security!
 
-## Project Structure
+### 4. Run the App
+```bash
+python main.py
+```
+
+---
+
+## 📚 Documentation
+
+**All detailed docs are in the [`docs/`](docs/) folder:**
+
+- **[📖 Documentation Index](docs/README.md)** - Start here!
+- **[🚀 Quick Start Guide](docs/QUICKSTART.md)** - Detailed setup
+- **[🔐 Security Guide](docs/SECURITY.md)** - Protect API keys
+- **[👨‍💻 Developer Guide](docs/DEVELOPER_GUIDE.md)** - Create modules
+- **[🐛 Bug Fixes Log](docs/)** - Version history details
+
+**Quick Links:**
+- [How to create a new module](docs/DEVELOPER_GUIDE.md)
+- [How to customize colors](docs/DARK_THEME_UPDATE.md)
+- [Understanding the Pomodoro Timer](docs/NEW_FEATURES_V1.3.md)
+- [Enabling GPU monitoring](docs/FIXES_V1.3.2.md)
+
+---
+
+## 📁 Project Structure
 
 ```
 ThunderzAssistant/
 │
-├── main.py                 # Main application file
-├── requirements.txt        # Python dependencies
-├── README.md               # This file
-├── CHANGELOG.md            # Version history
-├── config.py               # Configuration settings
-├── dashboard_tasks.json    # Saved tasks (auto-created)
+├── main.py                      # Application entry point
+├── requirements.txt             # Python dependencies
+├── config.py                    # Your config (gitignored)
+├── config.example.py            # Config template
+├── .gitignore                   # Git exclusions
+├── CHANGELOG.md                 # Version history
+├── README.md                    # This file
 │
-└── modules/                # Folder for all feature modules
-    ├── dashboard_module.py # Daily dashboard home screen
-    ├── weather_module.py   # Weather checking module
-    ├── template_module.py  # Template for creating new modules
-    └── (future modules)
+├── docs/                        # 📚 All documentation
+│   ├── README.md                # Documentation index
+│   ├── QUICKSTART.md
+│   ├── DEVELOPER_GUIDE.md
+│   ├── SECURITY.md
+│   └── ... (version docs)
+│
+├── modules/                     # 🔧 Feature modules
+│   ├── dashboard_module.py      # Dashboard home screen
+│   ├── weather_module.py        # Weather checker
+│   ├── news_module.py           # Breaking news
+│   ├── pomodoro_module.py       # Focus timer
+│   ├── system_monitor_module.py # System stats
+│   └── template_module.py       # Module template
+│
+└── scripts/                     # 🛠️ Utility scripts
+    └── (helper scripts)
 ```
 
-## How to Use
+---
 
-1. **Launch the Application**
-   - Run `python main.py` from the terminal
-   - The Daily Dashboard loads automatically as your home screen
+## 🎨 Dark Theme
 
-2. **Daily Dashboard**
-   - See your greeting, live clock, weather, and daily quote at a glance
-   - Add tasks in the Quick Tasks section and check them off as you go
-   - Click "🗑 Clear Done" to remove completed tasks
+The app features a sleek **dark blue theme**:
+- 🌑 Very dark backgrounds (#0F172A, #1E293B)
+- 💡 Light text (#E2E8F0)
+- 💙 Blue accents (#3B82F6)
+- ❌ **Zero white backgrounds!**
 
-3. **Weather Checker**
-   - Click "Weather" in the sidebar
-   - Your location's weather loads automatically
-   - Or enter any city name manually
-   - Click "📍 My Location" to refresh your location's weather
+**Want to customize?** See [docs/DARK_THEME_UPDATE.md](docs/DARK_THEME_UPDATE.md)
 
-## Adding New Modules
+---
 
-The application is designed to be easily expandable. To add a new module:
+## 🔧 Requirements
 
-1. Create a new Python file in the `modules/` directory
-2. Follow the structure of `template_module.py` as a guide
-3. Import your module in `main.py`
-4. Add a button in the sidebar to access your module
+### Core Dependencies
+- **Python 3.7+** (tested on 3.13)
+- **requests** - HTTP requests
+- **psutil** - System monitoring
 
-Example structure for a new module:
-```python
-class YourModule:
-    def __init__(self, parent_frame, colors):
-        self.parent = parent_frame
-        self.colors = colors
-        self.create_ui()
+### Optional (for GPU monitoring)
+- **pynvml** - NVIDIA GPU stats
+- Requires NVIDIA GPU + drivers
 
-    def create_ui(self):
-        # Create your module's interface here
-        pass
-```
+**All dependencies:** See `requirements.txt`
 
-## Color Scheme
+---
 
-The application uses a blue color theme:
-- **Primary**: #1E3A8A (Deep Blue)
-- **Secondary**: #3B82F6 (Bright Blue)
-- **Accent**: #60A5FA (Light Blue)
-- **Background**: #EFF6FF (Very Light Blue)
+## 💡 Usage Tips
 
-You can modify these in `config.py` to customize the appearance.
+### For Productivity
+- 🍅 Use Pomodoro for focused work sessions
+- ✅ Track daily tasks on Dashboard
+- 📊 Monitor system when multitasking
 
-## Configuration
+### For Gaming
+- 🎮 Watch GPU load and temp
+- 💾 Check VRAM usage
+- 🔥 Monitor CPU bottlenecks
 
-Settings can be adjusted in `config.py`:
-- Window size and minimum dimensions
-- Color scheme
-- Weather defaults (city, timeout, auto-detect)
-- Dashboard settings (startup behavior, tasks file)
-- Debug mode
+### For Development
+- 💻 Track system resources during builds
+- 📈 Identify memory leaks
+- 🔍 Find CPU-hogging processes
 
-## Version Control with Git
+---
 
-### Making Changes
-```bash
-git status
-git add .
-git commit -m "Description of what you changed"
-```
+## 🆕 Recent Updates
 
-## Troubleshooting
+### v1.3.2 (Latest)
+- ✅ Fixed GPU monitoring (now uses pynvml)
+- ✅ Fixed scroll position jumping
+- ✅ Better error messages
 
-### "Module not found" error
-- Make sure you've installed the requirements: `pip install -r requirements.txt`
+### v1.3.1
+- ✅ All storage drives (not just C:)
+- ✅ Top process lists
+- ✅ GPU monitoring
+- ✅ Per-core CPU stats
 
-### Weather not loading
-- Check your internet connection
-- Verify the city name is spelled correctly
-- The service uses wttr.in which is free and doesn't require an API key
+### v1.3.0
+- ✅ Dark theme
+- ✅ Pomodoro Timer
+- ✅ System Monitor
 
-### Location detection failing
-- The app tries ipapi.co first, then falls back to ip-api.com
-- If both fail, a detailed error message will show the reason
-- VPN usage may cause incorrect or failed location detection
+**Full history:** See [CHANGELOG.md](CHANGELOG.md)
 
-### Application won't start
-- Ensure Python 3.7+ is installed
-- Check that all files are in the correct directory structure
+---
 
-## Contributing
+## 🛠️ Adding Your Own Modules
 
-This is a personal project designed to grow over time. Feel free to add your own modules and customize it to fit your needs!
+Want to add features? It's designed to be modular!
 
-## License
+**Quick Guide:**
+1. Create `modules/your_module.py`
+2. Follow the template in `modules/template_module.py`
+3. Import in `main.py`
+4. Add sidebar button
 
-This project is for personal and educational use.
+**Detailed Guide:** See [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
 
-## Credits
+---
 
-- Weather data provided by [wttr.in](https://wttr.in)
-- Location detection via [ipapi.co](https://ipapi.co) and [ip-api.com](http://ip-api.com)
-- Built with Python and tkinter
-- Created for workflow improvement and learning
+## 🐛 Troubleshooting
+
+### App Won't Start
+- ✅ Check Python version: `python --version` (need 3.7+)
+- ✅ Install dependencies: `pip install -r requirements.txt`
+
+### GPU Stats Not Showing
+- ✅ Only works with NVIDIA GPUs
+- ✅ Install drivers from nvidia.com
+- ✅ Verify: `nvidia-smi` should work
+- ✅ Install pynvml: `pip install pynvml`
+
+### Weather Not Loading
+- ✅ Check internet connection
+- ✅ Uses wttr.in (no API key needed)
+- ✅ VPN may affect location detection
+
+**More help:** See [docs/](docs/) folder
+
+---
+
+## 🔐 Security Notes
+
+- ⚠️ **Never commit `config.py`** (contains API keys)
+- ✅ Always commit `config.example.py` (template)
+- ✅ `config.py` is in `.gitignore`
+
+**Setup guide:** [docs/SECURITY.md](docs/SECURITY.md)
+
+---
+
+## 🤝 Contributing
+
+This is a personal learning project, but feel free to:
+- Fork and customize
+- Add your own modules
+- Improve existing features
+
+---
+
+## 📄 License
+
+Personal and educational use.
+
+---
+
+## 🙏 Credits
+
+- **Weather:** [wttr.in](https://wttr.in)
+- **Location:** [ipapi.co](https://ipapi.co)
+- **News:** [NewsAPI.org](https://newsapi.org)
+- **System Monitoring:** [psutil](https://github.com/giampaolo/psutil)
+- **GPU Monitoring:** [pynvml](https://github.com/gpuopenanalytics/pynvml)
+- **Built with:** Python + tkinter
+
+---
+
+## 📞 Need Help?
+
+1. Check the [docs/](docs/) folder
+2. Read [QUICKSTART.md](docs/QUICKSTART.md)
+3. Review [CHANGELOG.md](CHANGELOG.md) for known issues
 
 ---
 
 **Happy Thundering! ⚡**
+
+*A productivity assistant that grows with your needs.*
