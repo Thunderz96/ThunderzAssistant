@@ -24,15 +24,18 @@ WINDOW_HEIGHT = 650
 WINDOW_MIN_WIDTH = 600
 WINDOW_MIN_HEIGHT = 400
 
-# Color Scheme (Blue Theme)
+# Color Scheme (Dark Blue Theme)
 # You can change these hex color codes to customize the appearance
 COLORS = {
-    'primary': '#1E3A8A',      # Deep blue - main headers and important elements
-    'secondary': '#3B82F6',    # Bright blue - sidebar and buttons
-    'accent': '#60A5FA',       # Light blue - highlights and active elements
-    'background': '#EFF6FF',   # Very light blue - main background
-    'text': '#1E293B',         # Dark gray-blue - text color
-    'button_hover': '#2563EB'  # Medium blue - button hover state
+    'primary': '#1E40AF',      # Rich blue - main headers and important elements
+    'secondary': '#1E293B',    # Dark slate - sidebar and cards
+    'accent': '#3B82F6',       # Bright blue - highlights and active elements
+    'background': '#0F172A',   # Very dark blue-gray - main background
+    'content_bg': '#1E293B',   # Dark gray-blue - content area background
+    'card_bg': '#334155',      # Medium dark gray - card backgrounds
+    'text': '#E2E8F0',         # Light gray - main text color
+    'text_dim': '#94A3B8',     # Dimmed text - secondary text
+    'button_hover': '#2563EB'  # Bright blue - button hover state
 }
 
 # Module Settings

@@ -58,47 +58,48 @@ class WeatherModule:
     def create_ui(self):
         title_label = tk.Label(
             self.parent, text="Weather Checker",
-            font=("Arial", 18, "bold"), bg="white", fg=self.colors['primary']
+            font=("Arial", 18, "bold"), bg=self.colors['content_bg'], fg=self.colors['text']
         )
         title_label.pack(pady=20)
 
-        input_frame = tk.Frame(self.parent, bg="white")
+        input_frame = tk.Frame(self.parent, bg=self.colors['content_bg'])
         input_frame.pack(pady=10)
 
         tk.Label(
             input_frame, text="Enter City:",
-            font=("Arial", 12), bg="white", fg=self.colors['text']
+            font=("Arial", 12), bg=self.colors['content_bg'], fg=self.colors['text']
         ).grid(row=0, column=0, padx=10, pady=5)
 
         self.city_entry = tk.Entry(
             input_frame, font=("Arial", 12), width=25,
-            relief=tk.SOLID, borderwidth=1
+            relief=tk.SOLID, borderwidth=1, bg=self.colors['card_bg'], 
+            fg=self.colors['text'], insertbackground=self.colors['text']
         )
         self.city_entry.grid(row=0, column=1, padx=10, pady=5)
         self.city_entry.bind('<Return>', lambda event: self.get_weather())
 
         tk.Button(
             input_frame, text="Get Weather", font=("Arial", 12, "bold"),
-            bg=self.colors['secondary'], fg="white",
+            bg=self.colors['accent'], fg="white",
             activebackground=self.colors['button_hover'], activeforeground="white",
             relief=tk.FLAT, cursor="hand2", command=self.get_weather, padx=20, pady=5
         ).grid(row=0, column=2, padx=10, pady=5)
 
         tk.Button(
             input_frame, text="📍 My Location", font=("Arial", 12, "bold"),
-            bg=self.colors['accent'], fg="white",
+            bg=self.colors['primary'], fg="white",
             activebackground=self.colors['button_hover'], activeforeground="white",
             relief=tk.FLAT, cursor="hand2", command=self.auto_detect_and_show_weather,
             padx=15, pady=5
         ).grid(row=0, column=3, padx=10, pady=5)
 
-        self.result_frame = tk.Frame(self.parent, bg="white")
+        self.result_frame = tk.Frame(self.parent, bg=self.colors['content_bg'])
         self.result_frame.pack(pady=20, fill=tk.BOTH, expand=True)
 
         tk.Label(
             self.parent,
             text="Tip: Weather for your location loads automatically, or enter any city name",
-            font=("Arial", 9, "italic"), bg="white", fg=self.colors['text']
+            font=("Arial", 9, "italic"), bg=self.colors['content_bg'], fg=self.colors['text']
         ).pack(pady=5)
 
     def _try_ipapi_co(self):
@@ -130,7 +131,7 @@ class WeatherModule:
         self.clear_results()
         tk.Label(
             self.result_frame, text="🌍 Detecting your location...",
-            font=("Arial", 12), bg="white", fg=self.colors['text']
+            font=("Arial", 12), bg=self.colors['content_bg'], fg=self.colors['text']
         ).pack(pady=20)
 
         def _detect():
@@ -166,7 +167,7 @@ class WeatherModule:
                 error_msg += "\n\nDetails:\n" + "\n".join(error_details)
             tk.Label(
                 self.result_frame, text=error_msg,
-                font=("Arial", 12), bg="white", fg="orange", justify=tk.CENTER
+                font=("Arial", 12), bg=self.colors['content_bg'], fg="orange", justify=tk.CENTER
             ).pack(pady=20)
 
     def get_weather(self, auto_detected=False):
@@ -181,7 +182,7 @@ class WeatherModule:
                         if auto_detected else f"Loading weather for {city}...")
         tk.Label(
             self.result_frame, text=loading_text,
-            font=("Arial", 12), bg="white", fg=self.colors['text']
+            font=("Arial", 12), bg=self.colors['content_bg'], fg=self.colors['text']
         ).pack(pady=20)
 
         def _fetch():
@@ -207,7 +208,7 @@ class WeatherModule:
         self.clear_results()
         tk.Label(
             self.result_frame, text=message,
-            font=("Arial", 12), bg="white", fg="red", justify=tk.CENTER
+            font=("Arial", 12), bg=self.colors['content_bg'], fg="red", justify=tk.CENTER
         ).pack(pady=20)
 
     def display_weather(self, data, city):
@@ -258,7 +259,7 @@ class WeatherModule:
             tk.Label(
                 self.result_frame,
                 text="Error parsing weather data.\nSome information may be unavailable.",
-                font=("Arial", 12), bg="white", fg="red"
+                font=("Arial", 12), bg=self.colors['content_bg'], fg="red"
             ).pack(pady=20)
 
     def clear_results(self):

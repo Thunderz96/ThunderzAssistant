@@ -101,7 +101,7 @@ class NewsModule:
             self.content_frame,
             text="📰 Breaking News",
             font=("Arial", 18, "bold"),
-            bg="white",
+            bg=self.colors.get('content_bg', '#1E293B'),
             fg=self.colors.get('primary', '#1E3A8A')
         )
         title_label.pack(pady=20)
@@ -111,7 +111,7 @@ class NewsModule:
             self.content_frame,
             text="Loading latest headlines...",
             font=("Arial", 12),
-            bg="white",
+            bg=self.colors.get('content_bg', '#1E293B'),
             fg=self.colors.get('text', '#1E293B')
         )
         loading_label.pack(pady=10)
@@ -128,7 +128,7 @@ class NewsModule:
                 self.content_frame,
                 text="Unable to fetch breaking news at the moment.\nPlease check your internet connection and try again.",
                 font=("Arial", 12),
-                bg="white",
+                bg=self.colors.get('content_bg', '#1E293B'),
                 fg="red",
                 justify=tk.CENTER
             )
@@ -136,9 +136,9 @@ class NewsModule:
             return
         
         # Create scrollable frame for news
-        canvas = tk.Canvas(self.content_frame, bg="white", highlightthickness=0)
+        canvas = tk.Canvas(self.content_frame, bg=self.colors.get('content_bg', '#1E293B'), highlightthickness=0)
         scrollbar = tk.Scrollbar(self.content_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas, bg="white")
+        scrollable_frame = tk.Frame(canvas, bg=self.colors.get('content_bg', '#1E293B'))
         
         scrollable_frame.bind(
             "<Configure>",

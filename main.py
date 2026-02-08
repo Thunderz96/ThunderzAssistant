@@ -65,14 +65,17 @@ class ThunderzAssistant:
 
 
      
-        # Blue color scheme
+        # Dark Blue color scheme
         self.colors = {
-            'primary': '#1E3A8A',      # Deep blue
-            'secondary': '#3B82F6',    # Bright blue
-            'accent': '#60A5FA',       # Light blue
-            'background': '#EFF6FF',   # Very light blue
-            'text': '#1E293B',         # Dark gray-blue
-            'button_hover': '#2563EB'  # Medium blue
+            'primary': '#1E40AF',      # Rich blue
+            'secondary': '#1E293B',    # Dark slate
+            'accent': '#3B82F6',       # Bright blue
+            'background': '#0F172A',   # Very dark blue-gray
+            'content_bg': '#1E293B',   # Dark gray-blue content area
+            'card_bg': '#334155',      # Medium dark gray cards
+            'text': '#E2E8F0',         # Light gray text
+            'text_dim': '#94A3B8',     # Dimmed text
+            'button_hover': '#2563EB'  # Bright blue hover
         }
         
         self.root.configure(bg=self.colors['background'])
@@ -124,8 +127,8 @@ class ThunderzAssistant:
             sidebar,
             text="📊  Dashboard",
             font=("Arial", 12),
-            bg=self.colors['accent'],
-            fg="white",
+            bg=self.colors['card_bg'],
+            fg=self.colors['text'],
             activebackground=self.colors['button_hover'],
             activeforeground="white",
             relief=tk.FLAT,
@@ -139,8 +142,8 @@ class ThunderzAssistant:
             sidebar,
             text="📰  Breaking News",
             font=("Arial", 12),
-            bg=self.colors['accent'],
-            fg="white",
+            bg=self.colors['card_bg'],
+            fg=self.colors['text'],
             activebackground=self.colors['button_hover'],
             activeforeground="white",
             relief=tk.FLAT,
@@ -154,8 +157,8 @@ class ThunderzAssistant:
             sidebar,
             text="🌤️  Weather",
             font=("Arial", 12),
-            bg=self.colors['accent'],
-            fg="white",
+            bg=self.colors['card_bg'],
+            fg=self.colors['text'],
             activebackground=self.colors['button_hover'],
             activeforeground="white",
             relief=tk.FLAT,
@@ -165,7 +168,7 @@ class ThunderzAssistant:
         weather_btn.pack(fill=tk.X, padx=10, pady=5)
         
         # Content area (where modules will be displayed)
-        self.content_frame = tk.Frame(main_container, bg="white", relief=tk.RAISED, borderwidth=2)
+        self.content_frame = tk.Frame(main_container, bg=self.colors['content_bg'], relief=tk.RAISED, borderwidth=2)
         self.content_frame.pack(fill=tk.BOTH, expand=True, side=tk.RIGHT)
         
         # Show dashboard as the default home screen
@@ -183,8 +186,8 @@ class ThunderzAssistant:
             self.content_frame,
             text="Welcome to Thunderz Assistant!",
             font=("Arial", 20, "bold"),
-            bg="white",
-            fg=self.colors['primary']
+            bg=self.colors['content_bg'],
+            fg=self.colors['text']
         )
         welcome_label.pack(pady=50)
         
@@ -192,8 +195,8 @@ class ThunderzAssistant:
             self.content_frame,
             text="Select a tool from the sidebar to get started.",
             font=("Arial", 12),
-            bg="white",
-            fg=self.colors['text']
+            bg=self.colors['content_bg'],
+            fg=self.colors['text_dim']
         )
         info_label.pack()
         
@@ -237,8 +240,8 @@ class ThunderzAssistant:
                      "   NEWS_API_KEY = 'your_key_here'\n\n"
                      "3. Restart the application",
                 font=("Arial", 12),
-                bg="white",
-                fg=self.colors['text'],
+                bg=self.colors['content_bg'],
+                fg=self.colors['text_dim'],
                 justify=tk.CENTER
             )
             error_label.pack(pady=50)

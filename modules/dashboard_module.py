@@ -123,14 +123,14 @@ class DashboardModule:
 
     def create_ui(self):
         """Create the dashboard user interface."""
-        canvas = tk.Canvas(self.parent, bg="white", highlightthickness=0)
+        canvas = tk.Canvas(self.parent, bg=self.colors['content_bg'], highlightthickness=0)
         canvas.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
         scrollbar = tk.Scrollbar(self.parent, orient=tk.VERTICAL, command=canvas.yview)
         scrollbar.pack(fill=tk.Y, side=tk.RIGHT)
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        self.main_frame = tk.Frame(canvas, bg="white")
+        self.main_frame = tk.Frame(canvas, bg=self.colors['content_bg'])
         canvas.create_window((0, 0), window=self.main_frame, anchor="nw")
         self.main_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(canvas.find_withtag("all")[0], width=e.width))
@@ -158,7 +158,7 @@ class DashboardModule:
         self.clock_label.pack(pady=(5, 10))
 
         # === CARDS ROW (Weather + Quote side by side) ===
-        cards_frame = tk.Frame(self.main_frame, bg="white")
+        cards_frame = tk.Frame(self.main_frame, bg=self.colors['content_bg'])
         cards_frame.pack(fill=tk.X, padx=15, pady=5)
         cards_frame.columnconfigure(0, weight=1)
         cards_frame.columnconfigure(1, weight=1)
@@ -200,7 +200,7 @@ class DashboardModule:
         ).pack(pady=(0, 10))
 
         # === QUICK TASKS SECTION ===
-        tasks_outer = tk.Frame(self.main_frame, bg="white")
+        tasks_outer = tk.Frame(self.main_frame, bg=self.colors['content_bg'])
         tasks_outer.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
 
         tasks_header = tk.Frame(tasks_outer, bg=self.colors['primary'])
@@ -241,7 +241,7 @@ class DashboardModule:
             relief=tk.FLAT, cursor="hand2", command=self.clear_completed_tasks, padx=8
         ).pack(side=tk.RIGHT, padx=0, pady=5)
 
-        self.tasks_frame = tk.Frame(tasks_outer, bg="white")
+        self.tasks_frame = tk.Frame(tasks_outer, bg=self.colors['content_bg'])
         self.tasks_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.render_tasks()
@@ -368,7 +368,7 @@ class DashboardModule:
         if not self.tasks:
             tk.Label(
                 self.tasks_frame, text="No tasks yet — add one above to get started!",
-                font=("Arial", 11, "italic"), bg="white", fg="gray"
+                font=("Arial", 11, "italic"), bg=self.colors['content_bg'], fg="gray"
             ).pack(pady=15)
             return
 
