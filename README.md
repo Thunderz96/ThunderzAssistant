@@ -3,12 +3,14 @@
 A modular, all-in-one GUI application built with Python. Think of it as a Swiss Army knife for productivity tools!
 
 ## Version
-Current Version: **1.0.0**
+Current Version: **1.1.0**
 
 ## Features
 
 ### Current Features
 - **Weather Checker**: Get real-time weather information for any city worldwide
+  - 🌍 **NEW: Automatic location detection** - Weather shows for your location automatically!
+  - 📍 **"My Location" button** - Quickly check your current location's weather
   - Temperature (Celsius and Fahrenheit)
   - Weather conditions
   - Humidity levels
@@ -68,8 +70,10 @@ ThunderzAssistant/
 
 2. **Use the Weather Checker**
    - Click "Weather" in the sidebar
-   - Enter a city name
+   - Your location's weather loads automatically! 🌍
+   - Or enter any city name manually
    - Click "Get Weather" or press Enter
+   - Click "📍 My Location" button to refresh your location's weather
    - View the weather information!
 
 ## Adding New Modules

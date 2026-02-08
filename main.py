@@ -1,6 +1,6 @@
 """
 Thunderz Assistant - Main Application
-Version: 1.0.0
+Version: 1.1.0
 A modular Swiss Army knife application that starts simple and grows over time.
 
 This is the main entry point for the application. It initializes the GUI and
@@ -35,7 +35,7 @@ class ThunderzAssistant:
             root: The main tkinter window object
         """
         self.root = root
-        self.root.title("Thunderz Assistant v1.0.0")
+        self.root.title("Thunderz Assistant v1.1.0")
         self.root.geometry("800x600")
         
         # Blue color scheme

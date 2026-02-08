@@ -2,6 +2,26 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.1.0] - 2024
+
+### Added
+- **Automatic Location Detection**: Weather module now auto-detects your location using IP geolocation
+- **"My Location" Button**: Quickly refresh weather for your current location
+- Weather automatically loads for your location when you open the module
+- Improved user experience with auto-populated city field
+
+### Changed
+- Updated weather module to version 1.1.0
+- Enhanced UI with new location detection button
+- Updated tip text to reflect auto-detection feature
+
+### Technical Details
+- Uses ipapi.co for free IP-based geolocation (no API key required)
+- Falls back gracefully if auto-detection fails
+- Auto-detection runs on module initialization
+
+---
+
 ## [1.0.0] - 2024
 
 ### Added

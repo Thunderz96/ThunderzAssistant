@@ -1,9 +1,10 @@
 """
 Weather Module for Thunderz Assistant
-Version: 1.0.0
+Version: 1.1.0
 
 This module provides weather checking functionality.
 It uses the wttr.in service to fetch weather data without requiring an API key.
+Now with automatic location detection!
 """
 
 import tkinter as tk
@@ -17,7 +18,7 @@ class WeatherModule:
     Weather checking module.
     
     This class creates the UI for checking weather and handles fetching
-    weather data from the wttr.in service.
+    weather data from the wttr.in service. It can auto-detect your location!
     """
     
     def __init__(self, parent_frame, colors):
@@ -33,6 +34,9 @@ class WeatherModule:
         
         # Create the UI
         self.create_ui()
+        
+        # Auto-detect location and show weather on startup
+        self.auto_detect_and_show_weather()
         
     def create_ui(self):
         """
@@ -93,6 +97,23 @@ class WeatherModule:
         )
         search_btn.grid(row=0, column=2, padx=10, pady=5)
         
+        # Auto-detect button
+        auto_btn = tk.Button(
+            input_frame,
+            text="📍 My Location",
+            font=("Arial", 12, "bold"),
+            bg=self.colors['accent'],
+            fg="white",
+            activebackground=self.colors['button_hover'],
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
+            command=self.auto_detect_and_show_weather,
+            padx=15,
+            pady=5
+        )
+        auto_btn.grid(row=0, column=3, padx=10, pady=5)
+        
         # Result frame (hidden initially)
         self.result_frame = tk.Frame(self.parent, bg="white")
         self.result_frame.pack(pady=20, fill=tk.BOTH, expand=True)
@@ -100,16 +121,85 @@ class WeatherModule:
         # Info label
         info_label = tk.Label(
             self.parent,
-            text="Tip: You can also press Enter to search",
+            text="Tip: Weather for your location loads automatically, or enter any city name",
             font=("Arial", 9, "italic"),
             bg="white",
             fg=self.colors['text']
         )
         info_label.pack(pady=5)
+    
+    def auto_detect_and_show_weather(self):
+        """
+        Automatically detect the user's location and show weather.
         
-    def get_weather(self):
+        This uses IP-based geolocation to determine the approximate city,
+        then fetches and displays the weather for that location.
+        """
+        try:
+            # Show loading message
+            self.clear_results()
+            loading_label = tk.Label(
+                self.result_frame,
+                text="🌍 Detecting your location...",
+                font=("Arial", 12),
+                bg="white",
+                fg=self.colors['text']
+            )
+            loading_label.pack(pady=20)
+            self.parent.update()
+            
+            # Use ipapi.co to get location from IP address (free, no API key)
+            # This gives us the city based on internet connection
+            location_url = "https://ipapi.co/json/"
+            location_response = requests.get(location_url, timeout=5)
+            location_response.raise_for_status()
+            location_data = location_response.json()
+            
+            # Extract city name
+            city = location_data.get('city', '')
+            
+            if not city:
+                # Fallback: use region or country if city not available
+                city = location_data.get('region', location_data.get('country_name', ''))
+            
+            if city:
+                # Update the entry field with detected city
+                self.city_entry.delete(0, tk.END)
+                self.city_entry.insert(0, city)
+                
+                # Fetch weather for detected location
+                self.get_weather(auto_detected=True)
+            else:
+                self.clear_results()
+                error_label = tk.Label(
+                    self.result_frame,
+                    text="Could not detect your location.\nPlease enter a city manually.",
+                    font=("Arial", 12),
+                    bg="white",
+                    fg="orange",
+                    justify=tk.CENTER
+                )
+                error_label.pack(pady=20)
+                
+        except requests.exceptions.RequestException:
+            # If auto-detection fails, just show a message but don't crash
+            self.clear_results()
+            error_label = tk.Label(
+                self.result_frame,
+                text="Could not auto-detect location.\nPlease enter a city manually.",
+                font=("Arial", 12),
+                bg="white",
+                fg="orange",
+                justify=tk.CENTER
+            )
+            error_label.pack(pady=20)
+        
+    def get_weather(self, auto_detected=False):
         """
         Fetch and display weather data for the entered city.
+        
+        Args:
+            auto_detected: Boolean indicating if this was triggered by auto-detection
         
         This method:
         1. Gets the city name from the input field
@@ -127,9 +217,10 @@ class WeatherModule:
         try:
             # Show loading message
             self.clear_results()
+            loading_text = f"Loading weather for {city}..." if not auto_detected else f"Loading weather for your location ({city})..."
             loading_label = tk.Label(
                 self.result_frame,
-                text="Loading weather data...",
+                text=loading_text,
                 font=("Arial", 12),
                 bg="white",
                 fg=self.colors['text']
