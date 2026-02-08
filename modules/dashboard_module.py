@@ -1,3 +1,29 @@
+"""
+Dashboard Module for Thunderz Assistant
+Version: 1.0.0
+
+This module provides a daily dashboard view with a greeting, live clock,
+weather summary, motivational quote, and quick tasks.
+Your daily home screen!
+"""
+
+import tkinter as tk
+from tkinter import messagebox
+import requests
+import json
+import os
+import threading
+from datetime import datetime, date
+import hashlib
+
+
+# Motivational quotes collection
+QUOTES = [
+    ("The only way to do great work is to love what you do.", "Steve Jobs"),
+    ("Success is not final, failure is not fatal: it is the courage to continue that counts.", "Winston Churchill"),
+    ("Believe you can and you're halfway there.", "Theodore Roosevelt"),
+    ("It does not matter how slowly you go as long as you do not stop.", "Confucius"),
+    ("The future belongs to those who believe in the beauty of their dreams.", "Eleanor Roosevelt"),
     ("Don't watch the clock; do what it does. Keep going.", "Sam Levenson"),
     ("Everything you've ever wanted is on the other side of fear.", "George Addair"),
     ("You are never too old to set another goal or to dream a new dream.", "C.S. Lewis"),
@@ -19,17 +45,348 @@
     ("If it doesn't challenge you, it won't change you.", "Fred DeVito"),
     ("What you do today can improve all your tomorrows.", "Ralph Marston"),
     ("Don't limit your challenges. Challenge your limits.", "Unknown"),
-    ("Hustle until your haters ask if you're hiring.", "Unknown"),
     ("The best time to plant a tree was 20 years ago. The second best time is now.", "Chinese Proverb"),
     ("Act as if what you do makes a difference. It does.", "William James"),
     ("Success usually comes to those who are too busy to be looking for it.", "Henry David Thoreau"),
     ("Opportunities don't happen. You create them.", "Chris Grosser"),
-    ("Don't be afraid to give up the good to go for the great.", "John D. Rockefeller"),
     ("I find that the harder I work, the more luck I seem to have.", "Thomas Jefferson"),
-    ("The road to success and the road to failure are almost exactly the same.", "Colin R. Davis"),
     ("It is never too late to be what you might have been.", "George Eliot"),
 ]
 
 # Path to save tasks
 TASKS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dashboard_tasks.json")
 
+
+class DashboardModule:
+    """
+    Daily Dashboard module - your home screen for Thunderz Assistant.
+
+    Shows a greeting, live clock, weather summary, daily quote, and quick tasks.
+    """
+
+    def __init__(self, parent_frame, colors):
+        self.parent = parent_frame
+        self.colors = colors
+        self.tasks = []
+        self.clock_label = None
+        self.weather_data = None
+        self._destroyed = False
+
+        self.load_tasks()
+        self.create_ui()
+        self.update_clock()
+        self.fetch_weather_summary()
+
+    def _is_alive(self):
+        """Check if our widgets still exist."""
+        if self._destroyed:
+            return False
+        try:
+            self.parent.winfo_exists()
+            return True
+        except tk.TclError:
+            self._destroyed = True
+            return False
+
+    def _safe_update(self, callback):
+        """Schedule a UI update on the main thread, only if widgets are alive."""
+        def _wrapped():
+            if not self._is_alive():
+                return
+            try:
+                callback()
+            except tk.TclError:
+                self._destroyed = True
+        if self._is_alive():
+            try:
+                self.parent.after(0, _wrapped)
+            except tk.TclError:
+                self._destroyed = True
+
+    def get_greeting(self):
+        """Return a greeting based on the current time of day."""
+        hour = datetime.now().hour
+        if hour < 12:
+            return "Good Morning"
+        elif hour < 17:
+            return "Good Afternoon"
+        elif hour < 21:
+            return "Good Evening"
+        else:
+            return "Good Night"
+
+    def get_daily_quote(self):
+        """Get a quote that changes once per day."""
+        today = date.today().isoformat()
+        index = int(hashlib.md5(today.encode()).hexdigest(), 16) % len(QUOTES)
+        return QUOTES[index]
+
+    def create_ui(self):
+        """Create the dashboard user interface."""
+        canvas = tk.Canvas(self.parent, bg="white", highlightthickness=0)
+        canvas.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
+
+        scrollbar = tk.Scrollbar(self.parent, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar.pack(fill=tk.Y, side=tk.RIGHT)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        self.main_frame = tk.Frame(canvas, bg="white")
+        canvas.create_window((0, 0), window=self.main_frame, anchor="nw")
+        self.main_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfig(canvas.find_withtag("all")[0], width=e.width))
+
+        # === GREETING & CLOCK SECTION ===
+        greeting_frame = tk.Frame(self.main_frame, bg=self.colors['primary'], pady=15)
+        greeting_frame.pack(fill=tk.X, padx=15, pady=(15, 5))
+
+        greeting = self.get_greeting()
+        tk.Label(
+            greeting_frame, text=f"⚡ {greeting}!",
+            font=("Arial", 22, "bold"), bg=self.colors['primary'], fg="white"
+        ).pack(pady=(10, 0))
+
+        today_str = datetime.now().strftime("%A, %B %d, %Y")
+        tk.Label(
+            greeting_frame, text=today_str,
+            font=("Arial", 12), bg=self.colors['primary'], fg="#93C5FD"
+        ).pack()
+
+        self.clock_label = tk.Label(
+            greeting_frame, text="",
+            font=("Arial", 28, "bold"), bg=self.colors['primary'], fg="white"
+        )
+        self.clock_label.pack(pady=(5, 10))
+
+        # === CARDS ROW (Weather + Quote side by side) ===
+        cards_frame = tk.Frame(self.main_frame, bg="white")
+        cards_frame.pack(fill=tk.X, padx=15, pady=5)
+        cards_frame.columnconfigure(0, weight=1)
+        cards_frame.columnconfigure(1, weight=1)
+
+        # --- Weather Card ---
+        weather_card = tk.Frame(cards_frame, bg=self.colors['accent'], relief=tk.RAISED, bd=1)
+        weather_card.grid(row=0, column=0, sticky="nsew", padx=(0, 5), pady=5)
+
+        tk.Label(
+            weather_card, text="🌤️ Weather",
+            font=("Arial", 13, "bold"), bg=self.colors['accent'], fg="white"
+        ).pack(pady=(10, 5))
+
+        self.weather_label = tk.Label(
+            weather_card, text="Loading...",
+            font=("Arial", 11), bg=self.colors['accent'], fg="white", justify=tk.CENTER
+        )
+        self.weather_label.pack(pady=(0, 10), padx=10)
+
+        # --- Quote Card ---
+        quote_card = tk.Frame(cards_frame, bg=self.colors['secondary'], relief=tk.RAISED, bd=1)
+        quote_card.grid(row=0, column=1, sticky="nsew", padx=(5, 0), pady=5)
+
+        tk.Label(
+            quote_card, text="💡 Daily Quote",
+            font=("Arial", 13, "bold"), bg=self.colors['secondary'], fg="white"
+        ).pack(pady=(10, 5))
+
+        quote_text, quote_author = self.get_daily_quote()
+        tk.Label(
+            quote_card, text=f'"{quote_text}"',
+            font=("Arial", 10, "italic"), bg=self.colors['secondary'], fg="white",
+            wraplength=230, justify=tk.CENTER
+        ).pack(pady=(0, 3), padx=10)
+
+        tk.Label(
+            quote_card, text=f"— {quote_author}",
+            font=("Arial", 9), bg=self.colors['secondary'], fg="#DBEAFE"
+        ).pack(pady=(0, 10))
+
+        # === QUICK TASKS SECTION ===
+        tasks_outer = tk.Frame(self.main_frame, bg="white")
+        tasks_outer.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
+
+        tasks_header = tk.Frame(tasks_outer, bg=self.colors['primary'])
+        tasks_header.pack(fill=tk.X)
+
+        tk.Label(
+            tasks_header, text="✅ Quick Tasks",
+            font=("Arial", 13, "bold"), bg=self.colors['primary'], fg="white"
+        ).pack(side=tk.LEFT, padx=10, pady=8)
+
+        self.task_count_label = tk.Label(
+            tasks_header, text="",
+            font=("Arial", 10), bg=self.colors['primary'], fg="#93C5FD"
+        )
+        self.task_count_label.pack(side=tk.RIGHT, padx=10, pady=8)
+
+        add_frame = tk.Frame(tasks_outer, bg=self.colors['background'], pady=8)
+        add_frame.pack(fill=tk.X)
+
+        self.task_entry = tk.Entry(add_frame, font=("Arial", 11), relief=tk.SOLID, borderwidth=1)
+        self.task_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 5), pady=5)
+        self.task_entry.insert(0, "Add a new task...")
+        self.task_entry.config(fg="gray")
+        self.task_entry.bind("<FocusIn>", self._on_entry_focus_in)
+        self.task_entry.bind("<FocusOut>", self._on_entry_focus_out)
+        self.task_entry.bind("<Return>", lambda e: self.add_task())
+
+        tk.Button(
+            add_frame, text="+ Add", font=("Arial", 10, "bold"),
+            bg=self.colors['secondary'], fg="white",
+            activebackground=self.colors['button_hover'], activeforeground="white",
+            relief=tk.FLAT, cursor="hand2", command=self.add_task, padx=12
+        ).pack(side=tk.RIGHT, padx=(5, 10), pady=5)
+
+        tk.Button(
+            add_frame, text="🗑 Clear Done", font=("Arial", 10),
+            bg="#EF4444", fg="white", activebackground="#DC2626", activeforeground="white",
+            relief=tk.FLAT, cursor="hand2", command=self.clear_completed_tasks, padx=8
+        ).pack(side=tk.RIGHT, padx=0, pady=5)
+
+        self.tasks_frame = tk.Frame(tasks_outer, bg="white")
+        self.tasks_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.render_tasks()
+
+    def _on_entry_focus_in(self, event):
+        if self.task_entry.get() == "Add a new task...":
+            self.task_entry.delete(0, tk.END)
+            self.task_entry.config(fg="black")
+
+    def _on_entry_focus_out(self, event):
+        if not self.task_entry.get().strip():
+            self.task_entry.delete(0, tk.END)
+            self.task_entry.insert(0, "Add a new task...")
+            self.task_entry.config(fg="gray")
+
+    def update_clock(self):
+        if not self._is_alive():
+            return
+        try:
+            if self.clock_label and self.clock_label.winfo_exists():
+                now = datetime.now().strftime("%I:%M:%S %p")
+                self.clock_label.config(text=now)
+                self.clock_label.after(1000, self.update_clock)
+        except tk.TclError:
+            self._destroyed = True
+
+    def fetch_weather_summary(self):
+        """Fetch weather in a background thread so the UI doesn't freeze."""
+        def _fetch():
+            try:
+                city = self._detect_city()
+                if not city:
+                    self._safe_update(lambda: self.weather_label.config(
+                        text="Could not detect location.\nUse the Weather tool for manual search."))
+                    return
+                url = f"https://wttr.in/{city}?format=j1"
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                current = data['current_condition'][0]
+                weather_text = (
+                    f"📍 {city}\n"
+                    f"{current['temp_F']}°F / {current['temp_C']}°C\n"
+                    f"{current['weatherDesc'][0]['value']}\n"
+                    f"Feels like {current['FeelsLikeF']}°F  |  💧 {current['humidity']}%"
+                )
+                self._safe_update(lambda: self.weather_label.config(text=weather_text))
+            except Exception:
+                self._safe_update(lambda: self.weather_label.config(
+                    text="Weather unavailable.\nCheck the Weather tool."))
+
+        threading.Thread(target=_fetch, daemon=True).start()
+
+    def _detect_city(self):
+        try:
+            resp = requests.get("https://ipapi.co/json/", timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            if not data.get('error'):
+                return data.get('city', data.get('region', ''))
+        except Exception:
+            pass
+        try:
+            resp = requests.get("http://ip-api.com/json/?fields=status,city,regionName", timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            if data.get('status') != 'fail':
+                return data.get('city', data.get('regionName', ''))
+        except Exception:
+            pass
+        return ''
+
+    def load_tasks(self):
+        try:
+            if os.path.exists(TASKS_FILE):
+                with open(TASKS_FILE, 'r') as f:
+                    self.tasks = json.load(f)
+            else:
+                self.tasks = []
+        except (json.JSONDecodeError, IOError):
+            self.tasks = []
+
+    def save_tasks(self):
+        try:
+            with open(TASKS_FILE, 'w') as f:
+                json.dump(self.tasks, f, indent=2)
+        except IOError:
+            pass
+
+    def add_task(self):
+        text = self.task_entry.get().strip()
+        if not text or text == "Add a new task...":
+            return
+        self.tasks.append({"text": text, "done": False})
+        self.save_tasks()
+        self.task_entry.delete(0, tk.END)
+        self.task_entry.insert(0, "Add a new task...")
+        self.task_entry.config(fg="gray")
+        self.parent.focus_set()
+        self.render_tasks()
+
+    def toggle_task(self, index):
+        if 0 <= index < len(self.tasks):
+            self.tasks[index]['done'] = not self.tasks[index]['done']
+            self.save_tasks()
+            self.render_tasks()
+
+    def clear_completed_tasks(self):
+        self.tasks = [t for t in self.tasks if not t['done']]
+        self.save_tasks()
+        self.render_tasks()
+
+    def render_tasks(self):
+        for widget in self.tasks_frame.winfo_children():
+            widget.destroy()
+
+        total = len(self.tasks)
+        done = sum(1 for t in self.tasks if t['done'])
+        if total > 0:
+            self.task_count_label.config(text=f"{done}/{total} completed")
+        else:
+            self.task_count_label.config(text="No tasks yet")
+
+        if not self.tasks:
+            tk.Label(
+                self.tasks_frame, text="No tasks yet — add one above to get started!",
+                font=("Arial", 11, "italic"), bg="white", fg="gray"
+            ).pack(pady=15)
+            return
+
+        for i, task in enumerate(self.tasks):
+            row_bg = "#F0FDF4" if task['done'] else "white"
+            row = tk.Frame(self.tasks_frame, bg=row_bg, pady=3)
+            row.pack(fill=tk.X, padx=5, pady=1)
+
+            check_text = "☑" if task['done'] else "☐"
+            tk.Button(
+                row, text=check_text, font=("Arial", 14), bg=row_bg,
+                fg=self.colors['secondary'] if task['done'] else self.colors['text'],
+                relief=tk.FLAT, cursor="hand2", borderwidth=0,
+                command=lambda idx=i: self.toggle_task(idx)
+            ).pack(side=tk.LEFT, padx=(5, 5))
+
+            task_font = ("Arial", 11, "overstrike") if task['done'] else ("Arial", 11)
+            task_fg = "gray" if task['done'] else self.colors['text']
+            tk.Label(
+                row, text=task['text'], font=task_font, bg=row_bg, fg=task_fg, anchor="w"
+            ).pack(side=tk.LEFT, fill=tk.X, expand=True)

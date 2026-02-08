@@ -24,12 +24,12 @@ Thunderz Assistant follows a **modular architecture** pattern:
 │  - Loads modules                     │
 └─────────────┬───────────────────────┘
               │
-              ├─────────────────────────┐
-              │                         │
-        ┌─────▼──────┐          ┌──────▼─────┐
-        │  Weather   │          │  Future    │
-        │  Module    │          │  Modules   │
-        └────────────┘          └────────────┘
+     ┌────────┼────────────────┐
+     │        │                │
+┌────▼───┐ ┌──▼──────┐ ┌──────▼─────┐
+│Dashboard│ │ Weather │ │  Future    │
+│ Module  │ │ Module  │ │  Modules   │
+└─────────┘ └─────────┘ └────────────┘
 ```
 
 ### Key Concepts
@@ -56,8 +56,12 @@ ThunderzAssistant/
 ├── config.py                    # Settings and configuration
 │   └── Color scheme, constants, defaults
 │
+├── dashboard_tasks.json         # Saved tasks (auto-created)
+│
 ├── modules/                     # All feature modules live here
 │   ├── __init__.py             # Makes this a Python package
+│   ├── dashboard_module.py     # Daily dashboard home screen
+│   │   └── DashboardModule class
 │   ├── weather_module.py       # Weather feature
 │   │   └── WeatherModule class
 │   └── template_module.py      # Template for new modules
@@ -93,7 +97,8 @@ ThunderzAssistant/
      - **Content Area**: Where modules are displayed
 
 3. **Module Display Methods**
-   - `show_welcome()`: Welcome screen
+   - `show_dashboard()`: Loads the daily dashboard (default on startup)
+   - `show_welcome()`: Welcome screen (legacy)
    - `show_weather()`: Loads the weather module
    - (You'll add more as you add modules)
 
@@ -107,7 +112,7 @@ main()
   → Create window 
   → Initialize ThunderzAssistant 
   → create_ui() 
-  → show_welcome() 
+  → show_dashboard() 
   → Wait for user interaction
 ```
 
@@ -376,7 +381,7 @@ git commit -m "Added calculator module"
 
 ### Create Versions
 ```bash
-git tag v1.1.0                  # Mark a version
+git tag v1.2.0                  # Mark a version
 git tag                         # List all versions
 ```
 

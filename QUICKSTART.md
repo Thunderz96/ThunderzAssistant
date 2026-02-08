@@ -25,7 +25,7 @@ Install the required packages:
 pip install -r requirements.txt
 ```
 
-This will install the `requests` library needed for the weather module.
+This will install the `requests` library needed for the weather and dashboard modules.
 
 ## Step 4: Run the Application
 
@@ -34,14 +34,19 @@ Start Thunderz Assistant:
 python main.py
 ```
 
-The application window should open with a blue theme!
+The **Daily Dashboard** loads automatically with your greeting, live clock, weather, and a daily quote!
 
-## Step 5: Try the Weather Checker
+## Step 5: Explore the Features
 
+**Dashboard** (loads on startup):
+1. See your weather, clock, and daily motivational quote
+2. Add tasks in the **Quick Tasks** section
+3. Check off tasks as you complete them
+
+**Weather Checker**:
 1. Click **"Weather"** in the sidebar
-2. Type a city name (e.g., "London", "New York", "Tokyo")
-3. Click **"Get Weather"** or press **Enter**
-4. View the weather information!
+2. Your location's weather loads automatically
+3. Or type a city name and click **"Get Weather"**
 
 ---
 
@@ -76,12 +81,12 @@ git commit -m "Initial commit"
 
 ### Plan Your Next Module
 Think about what tool would help your workflow! Some ideas:
-- Simple calculator
+- Habit tracker
 - Quick notes
+- Unit converter
 - Timer
-- File organizer
 
-Check out the `weather_module.py` file to see how modules are structured, then create your own!
+Check out `dashboard_module.py` and `weather_module.py` to see how modules are structured, then create your own!
 
 ---
 

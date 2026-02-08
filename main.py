@@ -1,6 +1,6 @@
 """
 Thunderz Assistant - Main Application
-Version: 1.1.0
+Version: 1.2.0
 A modular Swiss Army knife application that starts simple and grows over time.
 
 This is the main entry point for the application. It initializes the GUI and
@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
 
 # Import modules
 from weather_module import WeatherModule
+from dashboard_module import DashboardModule
 
 
 class ThunderzAssistant:
@@ -35,8 +36,8 @@ class ThunderzAssistant:
             root: The main tkinter window object
         """
         self.root = root
-        self.root.title("Thunderz Assistant v1.1.0")
-        self.root.geometry("800x600")
+        self.root.title("Thunderz Assistant v1.2.0")
+        self.root.geometry("900x650")
         
         # Blue color scheme
         self.colors = {
@@ -92,6 +93,21 @@ class ThunderzAssistant:
         )
         sidebar_title.pack(pady=20)
         
+        # Dashboard button
+        dashboard_btn = tk.Button(
+            sidebar,
+            text="📊  Dashboard",
+            font=("Arial", 12),
+            bg=self.colors['accent'],
+            fg="white",
+            activebackground=self.colors['button_hover'],
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
+            command=self.show_dashboard
+        )
+        dashboard_btn.pack(fill=tk.X, padx=10, pady=5)
+        
         # Weather button
         weather_btn = tk.Button(
             sidebar,
@@ -111,8 +127,8 @@ class ThunderzAssistant:
         self.content_frame = tk.Frame(main_container, bg="white", relief=tk.RAISED, borderwidth=2)
         self.content_frame.pack(fill=tk.BOTH, expand=True, side=tk.RIGHT)
         
-        # Welcome message
-        self.show_welcome()
+        # Show dashboard as the default home screen
+        self.show_dashboard()
         
     def show_welcome(self):
         """
@@ -140,6 +156,15 @@ class ThunderzAssistant:
         )
         info_label.pack()
         
+    def show_dashboard(self):
+        """
+        Display the daily dashboard in the content area.
+        
+        This is the default home screen that shows on startup.
+        """
+        self.clear_content()
+        DashboardModule(self.content_frame, self.colors)
+    
     def show_weather(self):
         """
         Display the weather module in the content area.

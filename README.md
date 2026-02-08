@@ -3,27 +3,33 @@
 A modular, all-in-one GUI application built with Python. Think of it as a Swiss Army knife for productivity tools!
 
 ## Version
-Current Version: **1.1.0**
+Current Version: **1.2.0**
 
 ## Features
 
-### Current Features
-- **Weather Checker**: Get real-time weather information for any city worldwide
-  - 🌍 **NEW: Automatic location detection** - Weather shows for your location automatically!
-  - 📍 **"My Location" button** - Quickly check your current location's weather
-  - Temperature (Celsius and Fahrenheit)
-  - Weather conditions
-  - Humidity levels
-  - Wind speed
-  - Visibility
-  - UV Index
+### 📊 Daily Dashboard (Default Home Screen)
+Your daily command center that greets you every time you open the app:
+- ⚡ **Smart greeting** based on time of day (Good Morning/Afternoon/Evening/Night)
+- 🕐 **Live clock** that updates every second
+- 📅 **Current date** display
+- 🌤️ **Weather summary** with automatic location detection
+- 💡 **Daily motivational quote** that changes each day (30+ quotes)
+- ✅ **Quick Tasks** — add, check off, and clear completed tasks
+  - Tasks persist between sessions (saved locally)
+
+### 🌤️ Weather Checker
+Get real-time weather information for any city worldwide:
+- 🌍 **Automatic location detection** with fallback service
+- 📍 **"My Location" button** to quickly refresh your local weather
+- Temperature (Celsius and Fahrenheit)
+- Weather conditions, humidity, wind speed, visibility, UV Index
 
 ### Future Module Ideas
-- Calculator
+- Habit tracker
 - Note-taking tool
-- File organizer
-- Task manager
 - Unit converter
+- File organizer
+- Timer/Stopwatch
 - And more!
 
 ## Installation
@@ -54,34 +60,41 @@ ThunderzAssistant/
 │
 ├── main.py                 # Main application file
 ├── requirements.txt        # Python dependencies
-├── README.md              # This file
-├── config.py              # Configuration settings
+├── README.md               # This file
+├── CHANGELOG.md            # Version history
+├── config.py               # Configuration settings
+├── dashboard_tasks.json    # Saved tasks (auto-created)
 │
-└── modules/               # Folder for all feature modules
-    ├── weather_module.py  # Weather checking module
-    └── (future modules will go here)
+└── modules/                # Folder for all feature modules
+    ├── dashboard_module.py # Daily dashboard home screen
+    ├── weather_module.py   # Weather checking module
+    ├── template_module.py  # Template for creating new modules
+    └── (future modules)
 ```
 
 ## How to Use
 
 1. **Launch the Application**
    - Run `python main.py` from the terminal
-   - The main window will open with a blue theme
+   - The Daily Dashboard loads automatically as your home screen
 
-2. **Use the Weather Checker**
+2. **Daily Dashboard**
+   - See your greeting, live clock, weather, and daily quote at a glance
+   - Add tasks in the Quick Tasks section and check them off as you go
+   - Click "🗑 Clear Done" to remove completed tasks
+
+3. **Weather Checker**
    - Click "Weather" in the sidebar
-   - Your location's weather loads automatically! 🌍
+   - Your location's weather loads automatically
    - Or enter any city name manually
-   - Click "Get Weather" or press Enter
-   - Click "📍 My Location" button to refresh your location's weather
-   - View the weather information!
+   - Click "📍 My Location" to refresh your location's weather
 
 ## Adding New Modules
 
 The application is designed to be easily expandable. To add a new module:
 
 1. Create a new Python file in the `modules/` directory
-2. Follow the structure of `weather_module.py` as a template
+2. Follow the structure of `template_module.py` as a guide
 3. Import your module in `main.py`
 4. Add a button in the sidebar to access your module
 
@@ -92,7 +105,7 @@ class YourModule:
         self.parent = parent_frame
         self.colors = colors
         self.create_ui()
-    
+
     def create_ui(self):
         # Create your module's interface here
         pass
@@ -106,31 +119,23 @@ The application uses a blue color theme:
 - **Accent**: #60A5FA (Light Blue)
 - **Background**: #EFF6FF (Very Light Blue)
 
-You can modify these in the `main.py` file to customize the appearance.
+You can modify these in `config.py` to customize the appearance.
+
+## Configuration
+
+Settings can be adjusted in `config.py`:
+- Window size and minimum dimensions
+- Color scheme
+- Weather defaults (city, timeout, auto-detect)
+- Dashboard settings (startup behavior, tasks file)
+- Debug mode
 
 ## Version Control with Git
 
-### Initial Setup
-```bash
-# Initialize git repository
-git init
-
-# Add all files
-git add .
-
-# Make your first commit
-git commit -m "Initial commit - Thunderz Assistant v1.0.0"
-```
-
 ### Making Changes
 ```bash
-# Check what files have changed
 git status
-
-# Add changed files
 git add .
-
-# Commit your changes
 git commit -m "Description of what you changed"
 ```
 
@@ -143,6 +148,11 @@ git commit -m "Description of what you changed"
 - Check your internet connection
 - Verify the city name is spelled correctly
 - The service uses wttr.in which is free and doesn't require an API key
+
+### Location detection failing
+- The app tries ipapi.co first, then falls back to ip-api.com
+- If both fail, a detailed error message will show the reason
+- VPN usage may cause incorrect or failed location detection
 
 ### Application won't start
 - Ensure Python 3.7+ is installed
@@ -159,6 +169,7 @@ This project is for personal and educational use.
 ## Credits
 
 - Weather data provided by [wttr.in](https://wttr.in)
+- Location detection via [ipapi.co](https://ipapi.co) and [ip-api.com](http://ip-api.com)
 - Built with Python and tkinter
 - Created for workflow improvement and learning
 
