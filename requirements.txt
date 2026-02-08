@@ -1,0 +1,5 @@
+# Thunderz Assistant - Python Dependencies
+# Install these with: pip install -r requirements.txt
+
+# For making HTTP requests to weather API
+requests>=2.31.0
