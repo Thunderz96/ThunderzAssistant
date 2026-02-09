@@ -50,3 +50,4 @@ backups/
 
 docs/GIT_CHEAT_SHEET.md     # Personal git reference (local only)
 V1.6.0_UPDATE_SUMMARY.md  # Deployment summary (local only)
+install_discord_presence.bat
