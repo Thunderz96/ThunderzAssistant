@@ -1,6 +1,6 @@
 """
 Thunderz Assistant - Main Application
-Version: 1.4.1
+Version: 1.4.2
 A modular Swiss Army knife application that starts simple and grows over time.
 
 This is the main entry point for the application. It initializes the GUI and

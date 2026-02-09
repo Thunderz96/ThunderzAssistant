@@ -1,6 +1,6 @@
 """
 Configuration Template for Thunderz Assistant
-Version: 1.4.1
+Version: 1.4.2
 
 IMPORTANT: This is a template file with placeholder values.
 To use this application:
@@ -15,7 +15,7 @@ You can modify these values to customize the application's behavior.
 
 # Application Information
 APP_NAME = "Thunderz Assistant"
-APP_VERSION = "1.4.1"
+APP_VERSION = "1.4.2"
 APP_AUTHOR = "Thunderz"
 
 # Window Settings

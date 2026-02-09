@@ -458,71 +458,97 @@ class DashboardModule:
 
     def fetch_local_media(self):
             """
-            Fetch current Spotify song title locally by finding the main Spotify window title (Windows-only for now).
+            Fetch current Spotify song title locally by finding windows owned by Spotify process.
             
             This runs in a background thread and updates the UI label.
+            Works with Desktop Spotify on Windows.
             """
             def _fetch():
-                media_text = "No Spotify song detected. Play something!"
+                media_text = "No song detected"
                 
                 try:
-                    # Step 1: Check if Spotify is running using psutil
-                    spotify_running = any('spotify' in proc.name().lower() for proc in psutil.process_iter(['name']))
-                    if not spotify_running:
-                        media_text = "Spotify not running."
+                    import win32process
+                    
+                    # Step 1: Get all Spotify process IDs
+                    spotify_pids = []
+                    for proc in psutil.process_iter(['pid', 'name']):
+                        if 'spotify.exe' in proc.info['name'].lower():
+                            spotify_pids.append(proc.info['pid'])
+                    
+                    if not spotify_pids:
+                        media_text = "Spotify not running"
                         self._safe_update(lambda: self.media_label.config(text=media_text))
                         return
                     
-                    # Step 2: List to hold window info (hwnd, title, class_name)
+                    # Step 2: Find ALL windows (including minimized)
                     windows = []
                     
-                    # Callback function for EnumWindows
-                    def enum_callback(hwnd, regex):
-                        # Get title
+                    def enum_callback(hwnd, param):
+                        # Check ALL windows, not just visible ones
                         title = win32gui.GetWindowText(hwnd)
-                        # Get class name
                         class_name = win32gui.GetClassName(hwnd)
-                        if title or class_name:
-                            windows.append({'hwnd': hwnd, 'title': title, 'class_name': class_name})
+                        
+                        # Get process ID for this window
+                        try:
+                            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                        except:
+                            pid = None
+                        
+                        windows.append({
+                            'hwnd': hwnd,
+                            'title': title,
+                            'class_name': class_name,
+                            'pid': pid
+                        })
                     
-                    # Enumerate all windows
                     win32gui.EnumWindows(enum_callback, None)
                     
-                    # Step 3: Find the Spotify window (class "Chrome_WidgetWin_0" and title with "Spotify")
-                    found = False
-                    for win in windows:
-                        if win['class_name'] == "Chrome_WidgetWin_0" and 'spotify' in win['title'].lower():
-                            title = win['title']
-                            # Debug print for the title (remove after testing)
-                            print(f"Detected Spotify main window title: '{title}'")
-                            
-                            # Step 4: Parse the title if it's a song
-                            if title and (' – ' in title or ' - ' in title):
-                                separator = ' – ' if ' – ' in title else ' - '
-                                parts = title.split(separator, 1)
-                                if len(parts) == 2:
-                                    artist = parts[0].strip()
-                                    song = parts[1].strip()
-                                    # Clean up suffix like " - Spotify" or " Premium"
-                                    song = song.replace(' - Spotify Premium', '').replace(' - Spotify', '').replace(' Premium', '').strip()
-                                    media_text = f"{song}\nby {artist}"
-                                    found = True
-                                    break
-                            else:
-                                media_text = "Spotify is open but paused or idle."
-                                found = True
+                    # Step 3: Filter for windows belonging to Spotify process
+                    spotify_windows = [w for w in windows if w['pid'] in spotify_pids]
                     
-                    # Fallback if no song title but Spotify running
-                    if not found and spotify_running:
-                        media_text = "Spotify is running but no song title found."
+                    # Step 4: Look for Chrome_WidgetWin windows (these have song info)
+                    chrome_windows = [w for w in spotify_windows if 'Chrome_WidgetWin' in w['class_name']]
+                    
+                    # Step 5: Parse the title
+                    found = False
+                    for win in chrome_windows:
+                        title = win['title']
+                        
+                        # Skip empty or just "Spotify" titles
+                        if not title or title in ['Spotify', 'Spotify Premium', 'Spotify Free', '']:
+                            continue
+                        
+                        # Parse song title
+                        if ' - ' in title:
+                            parts = title.split(' - ')
+                            
+                            # Remove "Spotify Premium" suffix if present
+                            if parts[-1].strip() in ['Spotify Premium', 'Spotify Free', 'Spotify']:
+                                parts = parts[:-1]
+                            
+                            if len(parts) >= 2:
+                                artist = parts[0].strip()
+                                song = parts[1].strip()
+                                media_text = f"🎵 {song}\nby {artist}"
+                                found = True
+                                break
+                            elif len(parts) == 1:
+                                media_text = f"🎵 {parts[0].strip()}"
+                                found = True
+                                break
+                    
+                    if not found and spotify_pids:
+                        media_text = "Spotify running\n(No song playing)"
                 
+                except ImportError:
+                    media_text = "pywin32 not installed"
                 except Exception as e:
-                    media_text = f"Error: {str(e)} (Windows only for now)"
+                    media_text = f"Error: {str(e)[:30]}"
                 
                 # Safely update the UI label
                 self._safe_update(lambda: self.media_label.config(text=media_text))
                 
-                # Refresh every 5 seconds (5000 ms) for testing
+                # Refresh every 5 seconds
                 if self._is_alive():
                     self.parent.after(5000, self.fetch_local_media)
             

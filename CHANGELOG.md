@@ -2,6 +2,24 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.4.2] - 2026-02-08
+
+### Fixed
+- **Media Card Spotify Detection**: Complete rewrite of detection method
+  - Now detects songs by Spotify.exe process instead of window title
+  - Changed from `Chrome_WidgetWin_0` to `Chrome_WidgetWin_1` (current Spotify version)
+  - Works with minimized Spotify windows (taskbar or system tray)
+  - No longer misidentifies browser tabs as Spotify
+  - More reliable song title parsing
+
+### Technical Details
+- Uses `win32process.GetWindowThreadProcessId()` to match windows to Spotify processes
+- Checks all windows owned by Spotify.exe, not just visible ones
+- Filters for `Chrome_WidgetWin` class windows (where song info appears)
+- Parses format: "Artist - Song" or "Artist - Song - Spotify Premium"
+
+---
+
 ## [1.4.1] - 2026-02-08
 
 ### Added

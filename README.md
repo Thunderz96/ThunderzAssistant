@@ -4,7 +4,7 @@ A modular, productivity-focused GUI application built with Python. Your Swiss Ar
 
 ---
 
-## 🎯 Current Version: **1.4.1**
+## 🎯 Current Version: **1.4.2**
 
 ---
 
@@ -192,7 +192,12 @@ The app features a sleek **dark blue theme**:
 
 ## 🆕 Recent Updates
 
-### v1.4.1 (Latest)
+### v1.4.2 (Latest)
+- ✅ Fixed Spotify detection
+- ✅ Now works with minimized Spotify
+- ✅ More reliable song tracking
+
+### v1.4.1
 - ✅ Media Card on Dashboard
 - ✅ Spotify status tracking (Windows)
 - ✅ Live "Now Playing" display
@@ -202,11 +207,6 @@ The app features a sleek **dark blue theme**:
 - ✅ Real-time stock prices
 - ✅ Portfolio tracking
 - ✅ Historical charts
-
-### v1.3.2
-- ✅ Fixed GPU monitoring (now uses pynvml)
-- ✅ Fixed scroll position jumping
-- ✅ Better error messages
 
 ### v1.3.1
 - ✅ All storage drives (not just C:)
