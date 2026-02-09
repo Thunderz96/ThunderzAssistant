@@ -54,6 +54,20 @@ DASHBOARD_TASKS_FILE = "dashboard_tasks.json"  # File to store quick tasks
 # Sign up takes 30 seconds - you get 100 requests per day for free
 NEWS_API_KEY = "YOUR_API_KEY_HERE"  # Replace with your actual NewsAPI.org key
 
+# Discord Rich Presence Module
+# Get your Application ID from: https://discord.com/developers/applications
+# 1. Create a new application
+# 2. Copy the "Application ID" from the General Information page
+# 3. Paste it below (it's an 18-19 digit number)
+DISCORD_APP_ID = "YOUR_DISCORD_APP_ID_HERE"  # Replace with your Discord Application ID
+
+# Discord Webhook (for sending messages to Discord channels)
+# Get your Webhook URL from: Right-click Discord channel → Edit Channel → Integrations → Webhooks
+# 1. Create a new webhook
+# 2. Copy the Webhook URL
+# 3. Paste it below
+DISCORD_WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"  # Replace with your Discord Webhook URL
+
 # Future module settings can be added here as you expand the application
 
 # Developer Mode

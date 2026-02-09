@@ -246,10 +246,35 @@ class PomodoroModule:
             seconds = self.time_left % 60
             time_str = f"{minutes:02d}:{seconds:02d}"
             self.timer_display.config(text=time_str)
+            
+            # Update Discord presence if timer is running
+            if self.is_running:
+                self.update_discord_status(time_str)
+                
         except tk.TclError:
             # Widget destroyed
             self._destroyed = True
             self.is_running = False
+    
+    def update_discord_status(self, time_str):
+        """Update Discord with current Pomodoro status"""
+        try:
+            from discord_presence_module import set_presence
+            
+            if self.is_work_session:
+                status = f"🍅 Focusing - {time_str} remaining"
+                details = f"Pomodoro {self.pomodoros_completed + 1}/8 today"
+            else:
+                # Determine if long or short break
+                if self.pomodoros_completed % 4 == 0:
+                    status = f"☕ Long break - {time_str}"
+                else:
+                    status = f"☕ Short break - {time_str}"
+                details = f"{self.pomodoros_completed} pomodoros completed"
+            
+            set_presence("Pomodoro", f"{status}\n{details}")
+        except:
+            pass  # Discord not connected, ignore
     
     def timer_complete(self):
         """

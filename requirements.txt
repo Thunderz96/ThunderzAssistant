@@ -27,6 +27,9 @@ pywin32>=305; sys_platform == 'win32'  # Windows API for Spotify detection
 opencv-python>=4.8.0  # Video playback with OpenCV
 Pillow>=10.0.0  # Image processing for video frames
 
+# Discord Rich Presence (v1.7.0+) - Social integration
+pypresence>=4.3.0  # Discord Rich Presence integration
+
 # ===== FUTURE / COMMENTED OUT =====
 
 # Spotify API Integration (future enhancement - currently using local detection)

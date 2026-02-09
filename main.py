@@ -32,6 +32,8 @@ from system_monitor_module import SystemMonitorModule
 from stock_monitor_module import StockMonitorModule
 from file_organizer_module import FileOrganizerModule
 from glizzy_module import GlizzyModule
+from discord_integration_module import DiscordIntegrationModule
+from discord_presence_module import set_instance
 
 
 class ToolTip:
@@ -140,6 +142,7 @@ class ThunderzAssistant:
             ("💻", "System", "Monitor system resources", self.show_system_monitor),
             ("📈", "Stocks", "Track stock market prices", self.show_stock_monitor),
             ("📁", "Organizer", "Clean up messy folders", self.show_file_organizer),
+            ("🎮", "Discord", "Discord presence & messages", self.show_discord_integration),
             ("🌭", "Glizzy", "Roll the dice for fun!", self.show_glizzy_module),
         ]
         
@@ -199,12 +202,36 @@ class ThunderzAssistant:
                 btn.config(bg=self.colors['card_bg'], fg=self.colors['text'])
         self.update_status(name)
         command()
+        
+        # Update Discord presence automatically
+        self.update_discord_presence(name)
+    
+    def update_discord_presence(self, module_name):
+        """Update Discord Rich Presence when switching modules"""
+        from discord_presence_module import set_presence
+        
+        # Custom messages per module
+        discord_messages = {
+            "Dashboard": "Viewing dashboard",
+            "News": "Reading breaking news",
+            "Weather": "Checking weather forecast",
+            "Pomodoro": "Using focus timer",
+            "System": "Monitoring system resources",
+            "Stocks": "Tracking stock portfolio",
+            "Organizer": "Organizing files",
+            "Discord": "Configuring Discord presence",
+            "Glizzy": "Rolling for Glizzy 🌭"
+        }
+        
+        message = discord_messages.get(module_name, f"Using {module_name}")
+        set_presence(module_name, message)
     
     def refresh_current_module(self):
         modules = {"Dashboard": self.show_dashboard, "News": self.show_news,
                   "Weather": self.show_weather, "Pomodoro": self.show_pomodoro,
                   "System": self.show_system_monitor, "Stocks": self.show_stock_monitor,
-                  "Organizer": self.show_file_organizer, "Glizzy": self.show_glizzy_module}
+                  "Organizer": self.show_file_organizer, "Discord": self.show_discord_integration,
+                  "Glizzy": self.show_glizzy_module}
         if self.current_module in modules:
             modules[self.current_module]()
     
@@ -246,6 +273,11 @@ class ThunderzAssistant:
         self.clear_content()
         FileOrganizerModule(self.content_frame, self.colors)
         self.update_status("Organizer", "Clean up Downloads folder automatically")
+    
+    def show_discord_integration(self):
+        self.clear_content()
+        DiscordIntegrationModule(self.content_frame, self.colors)
+        self.update_status("Discord", "Discord presence & send messages")
     
     def show_glizzy_module(self):
         self.clear_content()
