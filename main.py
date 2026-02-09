@@ -1,378 +1,356 @@
 """
-Thunderz Assistant - Main Application
-Version: 1.5.0
-A modular Swiss Army knife application that starts simple and grows over time.
+Thunderz Assistant - Enhanced UI Version
+Version: 1.6.0
 
-This is the main entry point for the application. It initializes the GUI and
-loads available modules.
+This is a modernized version with:
+- Menu bar (File, View, Help)
+- Status bar at bottom
+- Tooltips on all buttons
+- Keyboard shortcuts
+- Built-in help system
+- Better visual design
+
+To test: python main_enhanced.py
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Menu
 import sys
 import os
-import config  # Import the config module for API keys
+import webbrowser
+import config
 
-
-# Add the modules directory to the Python path
+# Add modules directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
 
-# Import modules
+# Import all modules
 from weather_module import WeatherModule
 from dashboard_module import DashboardModule
 from news_module import NewsModule
 from pomodoro_module import PomodoroModule
 from system_monitor_module import SystemMonitorModule
 from stock_monitor_module import StockMonitorModule
-from file_organizer_module import FileOrganizerModule  
+from file_organizer_module import FileOrganizerModule
+from glizzy_module import GlizzyModule
+
+
+class ToolTip:
+    """Tooltip class for showing help text on hover"""
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+    
+    def show_tooltip(self, event=None):
+        if self.tooltip_window or not self.text:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        self.tooltip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(tw, text=self.text, justify='left',
+                        background="#1E293B", foreground="#E2E8F0",
+                        relief='solid', borderwidth=1,
+                        font=("Segoe UI", 9), padx=8, pady=4)
+        label.pack()
+    
+    def hide_tooltip(self, event=None):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
 
 
 class ThunderzAssistant:
-    """
-    Main application class for Thunderz Assistant.
-    
-    This class creates the main window and manages the different modules/features
-    that can be added to the application.
-    """
-    
     def __init__(self, root):
-        """
-        Initialize the main application window.
-        
-        Args:
-            root: The main tkinter window object
-        """
         self.root = root
-        self.root.title("Thunderz Assistant v1.5.0")
-        self.root.geometry("900x650")
+        self.root.title("⚡ Thunderz Assistant v1.6.0")
+        self.root.geometry("1000x700")
+        self.root.minsize(900, 600)
         
-        # Load API keys from config
-        self.api_key = config.NEWS_API_KEY  # News API key
-        
-        # Error Handling if API key is missing or not set
+        self.api_key = config.NEWS_API_KEY
         if not self.api_key or self.api_key == "YOUR_API_KEY_HERE":
-            messagebox.showwarning(
-                "News API Key Missing", 
-                "News API key not configured.\n\n"
-                "To enable the News feature:\n"
-                "1. Get a free API key from https://newsapi.org/register\n"
-                "2. Open config.py\n"
-                "3. Replace 'YOUR_API_KEY_HERE' with your actual key\n\n"
-                "Dashboard and Weather will still work!"
-            )
-            # Don't destroy the app, just disable news feature
             self.api_key = None
-            
         
-
-        
-
-
-     
-        # Dark Blue color scheme
         self.colors = {
-            'primary': '#1E40AF',      # Rich blue
-            'secondary': '#1E293B',    # Dark slate
-            'accent': '#3B82F6',       # Bright blue
-            'background': '#0F172A',   # Very dark blue-gray
-            'content_bg': '#1E293B',   # Dark gray-blue content area
-            'card_bg': '#334155',      # Medium dark gray cards
-            'text': '#E2E8F0',         # Light gray text
-            'text_dim': '#94A3B8',     # Dimmed text
-            'button_hover': '#2563EB'  # Bright blue hover
+            'primary': '#1E40AF', 'secondary': '#1E293B', 'accent': '#3B82F6',
+            'background': '#0F172A', 'content_bg': '#1E293B', 'card_bg': '#334155',
+            'text': '#E2E8F0', 'text_dim': '#94A3B8', 'button_hover': '#2563EB',
+            'success': '#10B981', 'warning': '#F59E0B', 'danger': '#EF4444'
         }
         
         self.root.configure(bg=self.colors['background'])
+        self.current_module = "Dashboard"
         
-        # Initialize the UI
+        self.create_menu_bar()
         self.create_ui()
+        self.create_status_bar()
+        self.show_dashboard()
+    
+    def create_menu_bar(self):
+        menubar = Menu(self.root)
+        self.root.config(menu=menubar)
         
+        file_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Refresh", command=self.refresh_current_module, accelerator="F5")
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.root.quit, accelerator="Ctrl+Q")
+        
+        view_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="View", menu=view_menu)
+        view_menu.add_command(label="Dashboard", command=self.show_dashboard, accelerator="Ctrl+1")
+        view_menu.add_command(label="News", command=self.show_news, accelerator="Ctrl+2")
+        view_menu.add_command(label="Weather", command=self.show_weather, accelerator="Ctrl+3")
+        
+        help_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Quick Start Guide", command=self.show_quick_start)
+        help_menu.add_command(label="Keyboard Shortcuts", command=self.show_shortcuts)
+        help_menu.add_command(label="Documentation", command=self.open_documentation)
+        help_menu.add_separator()
+        help_menu.add_command(label="About", command=self.show_about)
+        
+        self.root.bind("<F5>", lambda e: self.refresh_current_module())
+        self.root.bind("<Control-q>", lambda e: self.root.quit())
+        self.root.bind("<Control-1>", lambda e: self.show_dashboard())
+        self.root.bind("<Control-2>", lambda e: self.show_news())
+        self.root.bind("<Control-3>", lambda e: self.show_weather())
+    
     def create_ui(self):
-        """
-        Create the user interface components.
-        
-        This method sets up the main layout with a title, navigation sidebar,
-        and content area where different modules will be displayed.
-        """
-        # Title bar
-        title_frame = tk.Frame(self.root, bg=self.colors['primary'], height=60)
-        title_frame.pack(fill=tk.X, side=tk.TOP)
-        title_frame.pack_propagate(False)
-        
-        title_label = tk.Label(
-            title_frame,
-            text="⚡ Thunderz Assistant",
-            font=("Arial", 24, "bold"),
-            bg=self.colors['primary'],
-            fg="white"
-        )
-        title_label.pack(pady=10)
-        
-        # Main container
         main_container = tk.Frame(self.root, bg=self.colors['background'])
         main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # Sidebar for navigation
-        sidebar = tk.Frame(main_container, bg=self.colors['secondary'], width=200)
+        sidebar = tk.Frame(main_container, bg=self.colors['secondary'], width=220)
         sidebar.pack(fill=tk.Y, side=tk.LEFT, padx=(0, 10))
         sidebar.pack_propagate(False)
         
-        sidebar_title = tk.Label(
-            sidebar,
-            text="Tools",
-            font=("Arial", 16, "bold"),
-            bg=self.colors['secondary'],
-            fg="white"
-        )
-        sidebar_title.pack(pady=20)
+        sidebar_header = tk.Frame(sidebar, bg=self.colors['primary'])
+        sidebar_header.pack(fill=tk.X)
+        tk.Label(sidebar_header, text="⚡ Modules", font=("Segoe UI", 16, "bold"),
+                bg=self.colors['primary'], fg="white", pady=15).pack()
         
-        # Dashboard button
-        dashboard_btn = tk.Button(
-            sidebar,
-            text="📊  Dashboard",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_dashboard
-        )
-        dashboard_btn.pack(fill=tk.X, padx=10, pady=5)
-
-        # News button
-        news_btn = tk.Button(
-            sidebar,
-            text="📰  Breaking News",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_news
-        )
-        news_btn.pack(fill=tk.X, padx=10, pady=5)
-                       
-        # Weather button
-        weather_btn = tk.Button(
-            sidebar,
-            text="🌤️  Weather",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_weather
-        )
-        weather_btn.pack(fill=tk.X, padx=10, pady=5)
+        modules = [
+            ("📊", "Dashboard", "Overview of your day", self.show_dashboard),
+            ("📰", "News", "Latest breaking news", self.show_news),
+            ("🌤️", "Weather", "Current weather conditions", self.show_weather),
+            ("🍅", "Pomodoro", "Focus timer for productivity", self.show_pomodoro),
+            ("💻", "System", "Monitor system resources", self.show_system_monitor),
+            ("📈", "Stocks", "Track stock market prices", self.show_stock_monitor),
+            ("📁", "Organizer", "Clean up messy folders", self.show_file_organizer),
+            ("🌭", "Glizzy", "Roll the dice for fun!", self.show_glizzy_module),
+        ]
         
-        # Pomodoro Timer button
-        pomodoro_btn = tk.Button(
-            sidebar,
-            text="🍅  Pomodoro",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_pomodoro
-        )
-        pomodoro_btn.pack(fill=tk.X, padx=10, pady=5)
+        self.module_buttons = {}
+        for icon, name, tooltip, command in modules:
+            btn = tk.Button(sidebar, text=f"{icon}  {name}", font=("Segoe UI", 11),
+                          bg=self.colors['card_bg'], fg=self.colors['text'],
+                          activebackground=self.colors['button_hover'], activeforeground="white",
+                          relief=tk.FLAT, cursor="hand2",
+                          command=lambda n=name, c=command: self.switch_module(n, c),
+                          anchor="w", padx=15, pady=10)
+            btn.pack(fill=tk.X, padx=10, pady=3)
+            ToolTip(btn, tooltip)
+            self.module_buttons[name] = btn
         
-        # System Monitor button
-        monitor_btn = tk.Button(
-            sidebar,
-            text="💻  System Monitor",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_system_monitor
-        )
-        monitor_btn.pack(fill=tk.X, padx=10, pady=5)
-
-        # Stock Monitor button
-        stock_monitor_btn = tk.Button(
-            sidebar,
-            text="📈  Stock Monitor",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_stock_monitor
-        )
-        stock_monitor_btn.pack(fill=tk.X, padx=10, pady=5)
-
-        # File Organizer button
-        file_organizer_btn = tk.Button(
-            sidebar,
-            text="📁  File Organizer",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
-            cursor="hand2",
-            command=self.show_file_organizer
-        )
-        file_organizer_btn.pack(fill=tk.X, padx=10, pady=5)
-                
-        # Content area (where modules will be displayed)
-        self.content_frame = tk.Frame(main_container, bg=self.colors['content_bg'], relief=tk.RAISED, borderwidth=2)
+        help_frame = tk.Frame(sidebar, bg=self.colors['secondary'])
+        help_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=10)
+        help_btn = tk.Button(help_frame, text="❓ Help", font=("Segoe UI", 11, "bold"),
+                           bg=self.colors['accent'], fg="white", relief=tk.FLAT,
+                           cursor="hand2", command=self.show_quick_start, pady=8)
+        help_btn.pack(fill=tk.X, padx=10)
+        ToolTip(help_btn, "View quick start guide and tips")
+        
+        self.content_frame = tk.Frame(main_container, bg=self.colors['content_bg'],
+                                     relief=tk.RAISED, borderwidth=1)
         self.content_frame.pack(fill=tk.BOTH, expand=True, side=tk.RIGHT)
+    
+    def create_status_bar(self):
+        self.status_bar = tk.Frame(self.root, bg=self.colors['secondary'], height=25)
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
         
-        # Show dashboard as the default home screen
-        self.show_dashboard()
+        self.status_module_label = tk.Label(self.status_bar, text=f"📍 {self.current_module}",
+                                           font=("Segoe UI", 9), bg=self.colors['secondary'],
+                                           fg=self.colors['text'], anchor="w", padx=10)
+        self.status_module_label.pack(side=tk.LEFT)
         
-    def show_welcome(self):
-        """
-        Display the welcome screen in the content area.
+        self.status_tip_label = tk.Label(self.status_bar, text="💡 Tip: Use Ctrl+1,2,3 for quick navigation",
+                                        font=("Segoe UI", 9), bg=self.colors['secondary'],
+                                        fg=self.colors['text_dim'])
+        self.status_tip_label.pack(side=tk.LEFT, expand=True)
         
-        This is shown when the application first starts, before any module is selected.
-        """
-        self.clear_content()
-        
-        welcome_label = tk.Label(
-            self.content_frame,
-            text="Welcome to Thunderz Assistant!",
-            font=("Arial", 20, "bold"),
-            bg=self.colors['content_bg'],
-            fg=self.colors['text']
-        )
-        welcome_label.pack(pady=50)
-        
-        info_label = tk.Label(
-            self.content_frame,
-            text="Select a tool from the sidebar to get started.",
-            font=("Arial", 12),
-            bg=self.colors['content_bg'],
-            fg=self.colors['text_dim']
-        )
-        info_label.pack()
-        
+        tk.Label(self.status_bar, text="v1.6.0", font=("Segoe UI", 9),
+                bg=self.colors['secondary'], fg=self.colors['text_dim'],
+                anchor="e", padx=10).pack(side=tk.RIGHT)
+    
+    def update_status(self, module_name, tip=None):
+        self.status_module_label.config(text=f"📍 {module_name}")
+        if tip:
+            self.status_tip_label.config(text=f"💡 {tip}")
+    
+    def switch_module(self, name, command):
+        self.current_module = name
+        for btn_name, btn in self.module_buttons.items():
+            if btn_name == name:
+                btn.config(bg=self.colors['accent'], fg="white")
+            else:
+                btn.config(bg=self.colors['card_bg'], fg=self.colors['text'])
+        self.update_status(name)
+        command()
+    
+    def refresh_current_module(self):
+        modules = {"Dashboard": self.show_dashboard, "News": self.show_news,
+                  "Weather": self.show_weather, "Pomodoro": self.show_pomodoro,
+                  "System": self.show_system_monitor, "Stocks": self.show_stock_monitor,
+                  "Organizer": self.show_file_organizer, "Glizzy": self.show_glizzy_module}
+        if self.current_module in modules:
+            modules[self.current_module]()
+    
     def show_dashboard(self):
-        """
-        Display the daily dashboard in the content area.
-        
-        This is the default home screen that shows on startup.
-        """
         self.clear_content()
         DashboardModule(self.content_frame, self.colors)
+        self.update_status("Dashboard", "Your daily overview at a glance")
     
     def show_weather(self):
-        """
-        Display the weather module in the content area.
-        
-        This method clears the current content and loads the weather checking module.
-        """
         self.clear_content()
-        
-        # Create and display the weather module
-        weather_module = WeatherModule(self.content_frame, self.colors)
+        WeatherModule(self.content_frame, self.colors)
+        self.update_status("Weather", "Check weather for any city")
     
     def show_news(self):
-        """
-        Display the news module in the content area.
-        
-        This method clears the current content and loads the breaking news module.
-        """
         self.clear_content()
-        
-        # Check if API key is configured
         if not self.api_key:
-            error_label = tk.Label(
-                self.content_frame,
-                text="📰 News Feature Not Available\n\n"
-                     "To enable breaking news:\n"
-                     "1. Get a free API key from:\n"
-                     "   https://newsapi.org/register\n\n"
-                     "2. Open config.py and add your key to:\n"
-                     "   NEWS_API_KEY = 'your_key_here'\n\n"
-                     "3. Restart the application",
-                font=("Arial", 12),
-                bg=self.colors['content_bg'],
-                fg=self.colors['text_dim'],
-                justify=tk.CENTER
-            )
-            error_label.pack(pady=50)
+            self.show_api_key_help()
             return
-        
-        # Create and display the news module
-        news_module = NewsModule(self.api_key, self.content_frame, self.colors)   
+        news_module = NewsModule(self.api_key, self.content_frame, self.colors)
         news_module.display_news()
+        self.update_status("News", "Stay updated with breaking news")
     
     def show_pomodoro(self):
-        """
-        Display the Pomodoro timer module in the content area.
-        
-        This method clears the current content and loads the Pomodoro timer.
-        """
         self.clear_content()
-        pomodoro_module = PomodoroModule(self.content_frame, self.colors)
+        PomodoroModule(self.content_frame, self.colors)
+        self.update_status("Pomodoro", "Focus with 25-minute work sessions")
     
     def show_system_monitor(self):
-        """
-        Display the system monitor module in the content area.
-        
-        This method clears the current content and loads the system resource monitor.
-        """
         self.clear_content()
-        monitor_module = SystemMonitorModule(self.content_frame, self.colors)
+        SystemMonitorModule(self.content_frame, self.colors)
+        self.update_status("System", "Monitor CPU, RAM, and disk usage")
     
     def show_stock_monitor(self):
-        """
-        Display the stock monitor module in the content area.
-        
-        This method clears the current content and loads the stock monitoring module.
-        """
         self.clear_content()
-        stock_monitor_module = StockMonitorModule(self.content_frame, self.colors)
+        StockMonitorModule(self.content_frame, self.colors)
+        self.update_status("Stocks", "Track your portfolio in real-time")
     
     def show_file_organizer(self):
-        """
-        Display the file organizer module in the content area.
-        
-        This method clears the current content and loads the file organization tool.
-        """
         self.clear_content()
-        file_organizer_module = FileOrganizerModule(self.content_frame, self.colors)
-
-
+        FileOrganizerModule(self.content_frame, self.colors)
+        self.update_status("Organizer", "Clean up Downloads folder automatically")
+    
+    def show_glizzy_module(self):
+        self.clear_content()
+        GlizzyModule(self.content_frame, self.colors)
+        self.update_status("Glizzy", "Roll the dice and see what happens!")
+    
     def clear_content(self):
-        """
-        Clear all widgets from the content area.
-        
-        This is called before loading a new module to ensure a clean slate.
-        """
         for widget in self.content_frame.winfo_children():
             widget.destroy()
+    
+    def show_api_key_help(self):
+        self.clear_content()
+        help_container = tk.Frame(self.content_frame, bg=self.colors['content_bg'])
+        help_container.pack(expand=True)
+        tk.Label(help_container, text="📰 News API Setup Required",
+                font=("Segoe UI", 20, "bold"), bg=self.colors['content_bg'],
+                fg=self.colors['text']).pack(pady=20)
+        instructions = """To enable the News feature:
+
+1. Get a free API key from NewsAPI.org
+2. Open config.py in the app folder
+3. Replace 'YOUR_API_KEY_HERE' with your key
+4. Restart the application
+
+The News feature will then be available!"""
+        tk.Label(help_container, text=instructions, font=("Segoe UI", 12),
+                bg=self.colors['content_bg'], fg=self.colors['text'],
+                justify=tk.LEFT).pack(pady=20)
+        tk.Button(help_container, text="Open NewsAPI.org",
+                 command=lambda: webbrowser.open("https://newsapi.org/register"),
+                 font=("Segoe UI", 11), bg=self.colors['accent'], fg="white",
+                 cursor="hand2", padx=20, pady=10).pack(pady=10)
+    
+    def show_quick_start(self):
+        guide = """Thunderz Assistant - Quick Start Guide
+
+🎯 Getting Started:
+• Use the sidebar to navigate between modules
+• Each module has its own unique functionality
+• Hover over buttons for helpful tooltips
+
+⌨️ Keyboard Shortcuts:
+• Ctrl+1, 2, 3: Quick module navigation
+• F5: Refresh current module
+• Ctrl+Q: Quit application
+
+📊 Popular Modules:
+• Dashboard: Daily overview with time, tasks, and media
+• Weather: Real-time weather for any location
+• Pomodoro: Focus timer for productivity
+• File Organizer: Auto-organize Downloads folder
+
+💡 Pro Tips:
+• Check the status bar for module-specific tips
+• Use File menu to access settings
+• Visit Help > Documentation for detailed guides
+
+Need more help? Check Help > Documentation!"""
+        messagebox.showinfo("Quick Start Guide", guide)
+    
+    def show_shortcuts(self):
+        shortcuts = """Keyboard Shortcuts
+
+Navigation:
+• Ctrl+1: Dashboard
+• Ctrl+2: News
+• Ctrl+3: Weather
+
+Actions:
+• F5: Refresh current module
+• Ctrl+Q: Quit application
+
+Window:
+• Alt+F4: Close window"""
+        messagebox.showinfo("Keyboard Shortcuts", shortcuts)
+    
+    def open_documentation(self):
+        docs_path = os.path.join(os.path.dirname(__file__), "docs")
+        if os.path.exists(docs_path):
+            os.startfile(docs_path)
+        else:
+            messagebox.showinfo("Documentation", "Documentation folder not found.\n\nCheck the GitHub repository for docs.")
+    
+    def show_about(self):
+        about_text = """⚡ Thunderz Assistant v1.6.0
+
+A modular productivity suite with:
+• Dashboard & Task Management
+• Weather & News Updates
+• Pomodoro Timer
+• System Monitoring
+• Stock Tracking
+• File Organization
+• And more!
+
+Created with ❤️ by Thunderz
+Python + Tkinter"""
+        messagebox.showinfo("About Thunderz Assistant", about_text)
 
 
 def main():
-    """
-    Main function to start the application.
-    
-    This creates the main window and starts the tkinter event loop.
-    """
     root = tk.Tk()
     app = ThunderzAssistant(root)
     root.mainloop()
 
 
-# Only run if this file is executed directly (not imported)
 if __name__ == "__main__":
     main()

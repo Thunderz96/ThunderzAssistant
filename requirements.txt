@@ -23,7 +23,11 @@ pandas>=2.0.0           # Data manipulation and analysis
 # Media Card on Dashboard (v1.4.1+) - Windows only
 pywin32>=305; sys_platform == 'win32'  # Windows API for Spotify detection
 
+# Glizzy Module (v1.5.1+) - Video playback
+opencv-python>=4.8.0  # Video playback with OpenCV
+Pillow>=10.0.0  # Image processing for video frames
+
 # ===== FUTURE / COMMENTED OUT =====
 
 # Spotify API Integration (future enhancement - currently using local detection)
-# spotipy>=2.22.1  # Official Spotify Web API library
+# spotipy>=2.22.1  # Official Spotify Web API library 
