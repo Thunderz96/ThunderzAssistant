@@ -2,6 +2,37 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.5.0] - 2026-02-08
+
+### Added
+- **File Organizer Module**: Automatically organize messy folders by file type
+  - Scan any folder to see file type breakdown
+  - Categorizes 70+ file extensions into 8 categories
+  - One-click organization into category folders
+  - Safe duplicate handling (adds numbers to duplicates)
+  - Undo functionality to restore original structure
+  - Categories: Images, Documents, Videos, Audio, Archives, Code, Executables, Other
+  - Works with Downloads, Desktop, or any custom folder
+  - **Safety Features**: 30+ forbidden system folders protected
+    - Blocks C:\Windows, C:\Program Files, /System, /usr, etc.
+    - Blocks root drives (C:\, D:\, /)
+    - Blocks AppData and system directories
+    - Visual "✅ Safe" indicator for selected folders
+    - 4-layer safety check system
+    - Clear error messages for unsafe folders
+
+### Technical Details
+- Uses `shutil.move()` for file operations
+- Tracks all moves in memory for undo capability
+- Handles duplicate filenames automatically
+- Confirmation dialogs before destructive operations
+- Scrollable results display for large folders
+- Module follows standard template structure
+- Path normalization for cross-platform safety checks
+- Forbidden folders list covers Windows, macOS, and Linux
+
+---
+
 ## [1.4.2] - 2026-02-08
 
 ### Fixed

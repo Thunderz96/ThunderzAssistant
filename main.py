@@ -1,6 +1,6 @@
 """
 Thunderz Assistant - Main Application
-Version: 1.4.2
+Version: 1.5.0
 A modular Swiss Army knife application that starts simple and grows over time.
 
 This is the main entry point for the application. It initializes the GUI and
@@ -23,7 +23,8 @@ from dashboard_module import DashboardModule
 from news_module import NewsModule
 from pomodoro_module import PomodoroModule
 from system_monitor_module import SystemMonitorModule
-from stock_monitor_module import StockMonitorModule  
+from stock_monitor_module import StockMonitorModule
+from file_organizer_module import FileOrganizerModule  
 
 
 class ThunderzAssistant:
@@ -42,7 +43,7 @@ class ThunderzAssistant:
             root: The main tkinter window object
         """
         self.root = root
-        self.root.title("Thunderz Assistant v1.3.0")
+        self.root.title("Thunderz Assistant v1.5.0")
         self.root.geometry("900x650")
         
         # Load API keys from config
@@ -214,6 +215,21 @@ class ThunderzAssistant:
             command=self.show_stock_monitor
         )
         stock_monitor_btn.pack(fill=tk.X, padx=10, pady=5)
+
+        # File Organizer button
+        file_organizer_btn = tk.Button(
+            sidebar,
+            text="📁  File Organizer",
+            font=("Arial", 12),
+            bg=self.colors['card_bg'],
+            fg=self.colors['text'],
+            activebackground=self.colors['button_hover'],
+            activeforeground="white",
+            relief=tk.FLAT,
+            cursor="hand2",
+            command=self.show_file_organizer
+        )
+        file_organizer_btn.pack(fill=tk.X, padx=10, pady=5)
                 
         # Content area (where modules will be displayed)
         self.content_frame = tk.Frame(main_container, bg=self.colors['content_bg'], relief=tk.RAISED, borderwidth=2)
@@ -325,6 +341,15 @@ class ThunderzAssistant:
         """
         self.clear_content()
         stock_monitor_module = StockMonitorModule(self.content_frame, self.colors)
+    
+    def show_file_organizer(self):
+        """
+        Display the file organizer module in the content area.
+        
+        This method clears the current content and loads the file organization tool.
+        """
+        self.clear_content()
+        file_organizer_module = FileOrganizerModule(self.content_frame, self.colors)
 
 
     def clear_content(self):

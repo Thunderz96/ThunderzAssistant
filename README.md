@@ -4,7 +4,7 @@ A modular, productivity-focused GUI application built with Python. Your Swiss Ar
 
 ---
 
-## 🎯 Current Version: **1.4.2**
+## 🎯 Current Version: **1.5.0**
 
 ---
 
@@ -44,6 +44,17 @@ Real-time stock market tracking:
 - 💼 **Portfolio tracking** with P&L
 - 🔔 **Price alerts** (customizable thresholds)
 - ⏱️ **Auto-refresh** every 60 seconds
+
+### 📁 File Organizer
+Automatically organize messy folders:
+- 🔍 **Scan any folder** (default: Downloads)
+- 📊 **File type breakdown** (70+ extensions)
+- ✨ **One-click organization** into category folders
+- ↩️ **Undo functionality** to restore structure
+- 🛡️ **Safe mode** (handles duplicates automatically)
+- 🚫 **System protection** (30+ forbidden folders blocked)
+- ✅ **Safety indicator** (visual confirmation)
+- 📂 **8 categories**: Images, Documents, Videos, Audio, Archives, Code, Executables, Other
 
 ### 🌤️ Weather Checker
 Real-time weather for any city:
@@ -192,7 +203,13 @@ The app features a sleek **dark blue theme**:
 
 ## 🆕 Recent Updates
 
-### v1.4.2 (Latest)
+### v1.5.0 (Latest)
+- ✅ File Organizer module
+- ✅ Auto-organize folders by file type
+- ✅ 70+ file extensions supported
+- ✅ Undo functionality
+
+### v1.4.2
 - ✅ Fixed Spotify detection
 - ✅ Now works with minimized Spotify
 - ✅ More reliable song tracking
@@ -201,12 +218,6 @@ The app features a sleek **dark blue theme**:
 - ✅ Media Card on Dashboard
 - ✅ Spotify status tracking (Windows)
 - ✅ Live "Now Playing" display
-
-### v1.4.0
-- ✅ Stock Monitor module
-- ✅ Real-time stock prices
-- ✅ Portfolio tracking
-- ✅ Historical charts
 
 ### v1.3.1
 - ✅ All storage drives (not just C:)
