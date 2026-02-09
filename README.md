@@ -4,7 +4,33 @@ A modular, productivity-focused GUI application built with Python. Your Swiss Ar
 
 ---
 
-## 🎯 Current Version: **1.5.0**
+## 🎯 Current Version: **1.6.0**
+
+### 🎨 What's New in v1.6.0?
+- **Menu Bar**: Professional menu system (File, View, Help)
+- **Status Bar**: Module indicator, tips, and version display
+- **Tooltips**: Helpful hints on hover for all buttons
+- **Keyboard Shortcuts**: Ctrl+1,2,3 for quick navigation, F5 to refresh
+- **Built-in Help**: Quick Start Guide, shortcuts reference, and documentation access
+- **Active Highlighting**: Visual feedback showing current module
+- **Looping Video**: Glizzy module video now loops continuously
+- **Modern Design**: Segoe UI font, better spacing, professional appearance
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+Make your workflow faster with these hotkeys:
+
+| Shortcut | Action |
+|----------|--------|
+| **Ctrl+1** | Jump to Dashboard |
+| **Ctrl+2** | Jump to News |
+| **Ctrl+3** | Jump to Weather |
+| **F5** | Refresh current module |
+| **Ctrl+Q** | Quit application |
+
+💡 **Tip:** Hover over any button for helpful tooltips!
 
 ---
 

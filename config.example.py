@@ -1,6 +1,6 @@
 """
 Configuration Template for Thunderz Assistant
-Version: 1.5.0
+Version: 1.6.0
 
 IMPORTANT: This is a template file with placeholder values.
 To use this application:
@@ -15,14 +15,14 @@ You can modify these values to customize the application's behavior.
 
 # Application Information
 APP_NAME = "Thunderz Assistant"
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.6.0"
 APP_AUTHOR = "Thunderz"
 
 # Window Settings
-WINDOW_WIDTH = 900
-WINDOW_HEIGHT = 650
-WINDOW_MIN_WIDTH = 600
-WINDOW_MIN_HEIGHT = 400
+WINDOW_WIDTH = 1000
+WINDOW_HEIGHT = 700
+WINDOW_MIN_WIDTH = 900
+WINDOW_MIN_HEIGHT = 600
 
 # Color Scheme (Dark Blue Theme)
 # You can change these hex color codes to customize the appearance

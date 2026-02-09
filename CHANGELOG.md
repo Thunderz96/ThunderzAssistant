@@ -2,6 +2,101 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.6.0] - 2026-02-09
+
+### Added - Major UI/UX Enhancement
+- **Menu Bar**: Professional menu system at the top of the window
+  - File menu: Refresh (F5), Exit (Ctrl+Q)
+  - View menu: Quick navigation to Dashboard, News, Weather
+  - Help menu: Quick Start Guide, Keyboard Shortcuts, Documentation, About
+  
+- **Status Bar**: Information bar at the bottom of the window
+  - Current module indicator (left): Shows which module you're viewing
+  - Contextual tips (center): Module-specific usage hints
+  - Version display (right): Shows current app version
+  
+- **Tooltips System**: Hover hints on all interactive elements
+  - ToolTip class for consistent tooltip behavior
+  - Helpful descriptions on every sidebar button
+  - Help button tooltip for guidance
+  
+- **Keyboard Shortcuts**: Full keyboard navigation support
+  - Ctrl+1: Quick switch to Dashboard
+  - Ctrl+2: Quick switch to News
+  - Ctrl+3: Quick switch to Weather
+  - F5: Refresh current module
+  - Ctrl+Q: Quit application
+  
+- **Built-in Help System**: Accessible guidance without leaving the app
+  - Quick Start Guide: Getting started tips and module overview
+  - Keyboard Shortcuts reference: Complete list of hotkeys
+  - Documentation launcher: Opens docs folder directly
+  - About dialog: App information and credits
+  
+- **Active Module Highlighting**: Visual feedback for current location
+  - Active button displays in accent blue (#3B82F6)
+  - Inactive buttons use standard gray (#334155)
+  - Clear indication of where you are in the app
+
+### Changed
+- **Enhanced Sidebar Design**: 
+  - Modernized header with "⚡ Modules" title
+  - Better spacing and padding on all buttons
+  - Help button prominently placed at bottom
+  - Wider sidebar (200px → 220px) for better readability
+  
+- **Typography Upgrade**:
+  - Changed from Arial to Segoe UI throughout
+  - More professional, modern appearance
+  - Better consistency with Windows 11 design
+  
+- **Window Settings**:
+  - Default size increased: 900x650 → 1000x700
+  - Minimum size constraint added: 900x600
+  - Better initial window proportions
+  
+- **Module Switch Logic**:
+  - Centralized switch_module() method
+  - Updates status bar automatically
+  - Handles button highlighting
+  - Cleaner code organization
+
+### Fixed
+- **Glizzy Module Video Playback**:
+  - Video now loops continuously until stopped
+  - Fixed "bad window path name" error on module switch
+  - Video label moved outside results_frame (prevents destruction)
+  - Added widget existence checks before updates
+  - Proper cleanup on module switch or new roll
+  - stop_video() called before clearing results
+  - Thread-safe video updates
+
+### Technical Details
+- New ToolTip class for hover functionality
+- Menu bar using tkinter Menu widget
+- Status bar with three-section layout
+- Keyboard binding system with lambda functions
+- module_buttons dictionary for tracking active state
+- current_module tracking for refresh functionality
+- Widget existence validation with _widget_exists()
+- Threaded video playback with graceful shutdown
+
+### Documentation
+- Added UI_ENHANCEMENT_GUIDE.md: Complete feature walkthrough
+- Added UI_ENHANCEMENT_SUMMARY.md: Quick visual reference
+- Added BACKUP_STRATEGY.md: Backup and version control guide
+- Added deploy_enhanced_ui.bat: Automated deployment script
+- Added test_enhanced_ui.bat: Quick test launcher
+
+### Developer Notes
+- Code is more maintainable with centralized module switching
+- ToolTip class is reusable for future features
+- Status bar system ready for expansion (notifications, progress, etc.)
+- Menu system easily extensible for new features
+- Proper separation of concerns (UI vs logic)
+
+---
+
 ## [1.5.0] - 2026-02-08
 
 ### Added
