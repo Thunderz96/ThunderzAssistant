@@ -1,9 +1,9 @@
 """
 Dashboard Module for Thunderz Assistant
-Version: 1.0.0
+Version: 1.1.0 # Updated version for media integration
 
 This module provides a daily dashboard view with a greeting, live clock,
-weather summary, motivational quote, and quick tasks.
+weather summary, motivational quote, quick tasks, and now media display (e.g., current Spotify song).
 Your daily home screen!
 """
 
@@ -15,6 +15,14 @@ import os
 import threading
 from datetime import datetime, date
 import hashlib
+import psutil 
+import ctypes
+from ctypes import wintypes
+import win32gui
+import win32process  
+#import spotipy
+#from spotipy.oauth2 import SpotifyOAuth
+import config
 
 
 # Motivational quotes collection
@@ -71,11 +79,16 @@ class DashboardModule:
         self.clock_label = None
         self.weather_data = None
         self._destroyed = False
+        self.media_label = None
+        #self.spotify_client = None
 
         self.load_tasks()
         self.create_ui()
         self.update_clock()
         self.fetch_weather_summary()
+        #self.setup_spotify_client()
+        #self.fetch_media_info()
+        self.fetch_local_media()
 
     def _is_alive(self):
         """Check if our widgets still exist."""
@@ -157,11 +170,12 @@ class DashboardModule:
         )
         self.clock_label.pack(pady=(5, 10))
 
-        # === CARDS ROW (Weather + Quote side by side) ===
+        # === CARDS ROW  ===
         cards_frame = tk.Frame(self.main_frame, bg=self.colors['content_bg'])
         cards_frame.pack(fill=tk.X, padx=15, pady=5)
-        cards_frame.columnconfigure(0, weight=1)
-        cards_frame.columnconfigure(1, weight=1)
+        cards_frame.columnconfigure(0, weight=1) # Weather card
+        cards_frame.columnconfigure(1, weight=1) # Quote card
+        cards_frame.columnconfigure(2, weight=1) # Media card
 
         # --- Weather Card ---
         weather_card = tk.Frame(cards_frame, bg=self.colors['accent'], relief=tk.RAISED, bd=1)
@@ -198,6 +212,23 @@ class DashboardModule:
             quote_card, text=f"— {quote_author}",
             font=("Arial", 9), bg=self.colors['secondary'], fg="#DBEAFE"
         ).pack(pady=(0, 10))
+
+        # --- Media Card ---
+        media_card = tk.Frame(cards_frame, bg=self.colors['primary'], relief=tk.RAISED, bd=1)
+        media_card.grid(row=0, column=2, sticky="nsew", padx=(5, 0), pady=5)
+
+        tk.Label(
+            media_card, text="🎵 Now Playing",
+            font=("Arial", 13, "bold"), bg=self.colors['primary'], fg="white"
+        ).pack(pady=(10, 5))
+
+        self.media_label = tk.Label(
+            media_card, text="Checking local media...",
+            font=("Arial", 11), bg=self.colors['primary'], fg="white", justify=tk.CENTER
+        )
+        self.media_label.pack(pady=(0, 10), padx=10)
+
+        # --- End of Cards ---
 
         # === QUICK TASKS SECTION ===
         tasks_outer = tk.Frame(self.main_frame, bg=self.colors['content_bg'])
@@ -390,3 +421,110 @@ class DashboardModule:
             tk.Label(
                 row, text=task['text'], font=task_font, bg=row_bg, fg=task_fg, anchor="w"
             ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+    
+    def setup_spotify_client(self):
+        try:
+            self.spotify_client = spotipy.Spotify(auth_manager=SpotifyOAuth(
+                client_id=config.SPOTIFY_CLIENT_ID,
+                client_secret=config.SPOTIFY_CLIENT_SECRET,
+                redirect_uri=config.SPOTIFY_REDIRECT_URI,
+                scope="user-read-currently-playing"
+            ))
+        except Exception:
+            self.spotify_client = None
+            
+    def fetch_media_info(self):
+        """Fetch current media info from Spotify in a background thread."""
+        def _fetch():
+            try:
+                if not self.spotify_client:
+                    self._safe_update(lambda: self.media_label.config(
+                        text="Spotify client not configured."))
+                    return
+                current = self.spotify_client.current_user_playing_track()
+                if current and current['is_playing']:
+                    track = current['item']
+                    artists = ", ".join(artist['name'] for artist in track['artists'])
+                    track_name = track['name']
+                    media_text = f"🎵 {track_name}\nby {artists}"
+                else:
+                    media_text = "No track currently playing."
+                self._safe_update(lambda: self.media_label.config(text=media_text))
+            except Exception:
+                self._safe_update(lambda: self.media_label.config(
+                    text="Could not fetch media info."))
+
+        threading.Thread(target=_fetch, daemon=True).start()
+
+    def fetch_local_media(self):
+            """
+            Fetch current Spotify song title locally by finding the main Spotify window title (Windows-only for now).
+            
+            This runs in a background thread and updates the UI label.
+            """
+            def _fetch():
+                media_text = "No Spotify song detected. Play something!"
+                
+                try:
+                    # Step 1: Check if Spotify is running using psutil
+                    spotify_running = any('spotify' in proc.name().lower() for proc in psutil.process_iter(['name']))
+                    if not spotify_running:
+                        media_text = "Spotify not running."
+                        self._safe_update(lambda: self.media_label.config(text=media_text))
+                        return
+                    
+                    # Step 2: List to hold window info (hwnd, title, class_name)
+                    windows = []
+                    
+                    # Callback function for EnumWindows
+                    def enum_callback(hwnd, regex):
+                        # Get title
+                        title = win32gui.GetWindowText(hwnd)
+                        # Get class name
+                        class_name = win32gui.GetClassName(hwnd)
+                        if title or class_name:
+                            windows.append({'hwnd': hwnd, 'title': title, 'class_name': class_name})
+                    
+                    # Enumerate all windows
+                    win32gui.EnumWindows(enum_callback, None)
+                    
+                    # Step 3: Find the Spotify window (class "Chrome_WidgetWin_0" and title with "Spotify")
+                    found = False
+                    for win in windows:
+                        if win['class_name'] == "Chrome_WidgetWin_0" and 'spotify' in win['title'].lower():
+                            title = win['title']
+                            # Debug print for the title (remove after testing)
+                            print(f"Detected Spotify main window title: '{title}'")
+                            
+                            # Step 4: Parse the title if it's a song
+                            if title and (' – ' in title or ' - ' in title):
+                                separator = ' – ' if ' – ' in title else ' - '
+                                parts = title.split(separator, 1)
+                                if len(parts) == 2:
+                                    artist = parts[0].strip()
+                                    song = parts[1].strip()
+                                    # Clean up suffix like " - Spotify" or " Premium"
+                                    song = song.replace(' - Spotify Premium', '').replace(' - Spotify', '').replace(' Premium', '').strip()
+                                    media_text = f"{song}\nby {artist}"
+                                    found = True
+                                    break
+                            else:
+                                media_text = "Spotify is open but paused or idle."
+                                found = True
+                    
+                    # Fallback if no song title but Spotify running
+                    if not found and spotify_running:
+                        media_text = "Spotify is running but no song title found."
+                
+                except Exception as e:
+                    media_text = f"Error: {str(e)} (Windows only for now)"
+                
+                # Safely update the UI label
+                self._safe_update(lambda: self.media_label.config(text=media_text))
+                
+                # Refresh every 5 seconds (5000 ms) for testing
+                if self._is_alive():
+                    self.parent.after(5000, self.fetch_local_media)
+            
+            # Run in background thread
+            threading.Thread(target=_fetch, daemon=True).start()

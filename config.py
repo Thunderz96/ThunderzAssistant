@@ -1,6 +1,6 @@
 """
 Configuration Template for Thunderz Assistant
-Version: 1.2.0
+Version: 1.4.1
 
 IMPORTANT: This is a template file with placeholder values.
 To use this application:
@@ -15,7 +15,7 @@ You can modify these values to customize the application's behavior.
 
 # Application Information
 APP_NAME = "Thunderz Assistant"
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.4.1"
 APP_AUTHOR = "Thunderz"
 
 # Window Settings
@@ -54,9 +54,11 @@ DASHBOARD_TASKS_FILE = "dashboard_tasks.json"  # File to store quick tasks
 # Sign up takes 30 seconds - you get 100 requests per day for free
 NEWS_API_KEY = "816d0787df7c434fa06f8a2327beb8d6"  # Replace with your actual NewsAPI.org key
 
-# Future module settings can be added here as you expand the application
-# Stock Monitor Module settings are defined in stock_monitor_module.py, but you can add global settings here if needed.
-
+# Spotify Integration
+SPOTIFY_CLIENT_ID = "your_client_id_here"
+SPOTIFY_CLIENT_SECRET = "your_client_secret_here"
+SPOTIFY_REDIRECT_URI = "http://localhost:8888/callback"  # Or your chosen URI
 
 # Developer Mode
 DEBUG_MODE = True  # Set to True to enable debug messages
+

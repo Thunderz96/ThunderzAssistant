@@ -4,7 +4,7 @@ A modular, productivity-focused GUI application built with Python. Your Swiss Ar
 
 ---
 
-## 🎯 Current Version: **1.3.2**
+## 🎯 Current Version: **1.4.1**
 
 ---
 
@@ -15,6 +15,7 @@ Your daily command center:
 - ⏰ **Live clock** with time-based greetings
 - 📅 **Current date** display
 - 🌤️ **Weather summary** with auto-location
+- 🎵 **Now Playing** - Spotify status (Windows)
 - 💡 **Daily motivational quote** (30+ quotes)
 - ✅ **Quick Tasks** with persistence
 
@@ -35,6 +36,14 @@ Real-time computer stats:
 - 🧠 **Top 5 RAM processes**
 - 🎮 **GPU monitoring** (NVIDIA cards)
 - ⏱️ **System uptime**
+
+### 📈 Stock Monitor
+Real-time stock market tracking:
+- 📊 **Live stock prices** (stocks, ETFs, crypto)
+- 📈 **Historical charts** (1D, 1W, 1M, 1Y, 5Y)
+- 💼 **Portfolio tracking** with P&L
+- 🔔 **Price alerts** (customizable thresholds)
+- ⏱️ **Auto-refresh** every 60 seconds
 
 ### 🌤️ Weather Checker
 Real-time weather for any city:
@@ -151,9 +160,12 @@ The app features a sleek **dark blue theme**:
 - **requests** - HTTP requests
 - **psutil** - System monitoring
 
-### Optional (for GPU monitoring)
+### Optional (for specific features)
 - **pynvml** - NVIDIA GPU stats
-- Requires NVIDIA GPU + drivers
+- **yfinance** - Stock market data
+- **matplotlib** - Stock charts
+- **pandas** - Data analysis
+- **pywin32** - Windows media detection (Windows only)
 
 **All dependencies:** See `requirements.txt`
 
@@ -180,7 +192,18 @@ The app features a sleek **dark blue theme**:
 
 ## 🆕 Recent Updates
 
-### v1.3.2 (Latest)
+### v1.4.1 (Latest)
+- ✅ Media Card on Dashboard
+- ✅ Spotify status tracking (Windows)
+- ✅ Live "Now Playing" display
+
+### v1.4.0
+- ✅ Stock Monitor module
+- ✅ Real-time stock prices
+- ✅ Portfolio tracking
+- ✅ Historical charts
+
+### v1.3.2
 - ✅ Fixed GPU monitoring (now uses pynvml)
 - ✅ Fixed scroll position jumping
 - ✅ Better error messages

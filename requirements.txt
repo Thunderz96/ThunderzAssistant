@@ -1,17 +1,29 @@
 # Thunderz Assistant - Python Dependencies
 # Install these with: pip install -r requirements.txt
 
+# ===== CORE DEPENDENCIES (Required) =====
+
 # For making HTTP requests to weather API and news API
 requests>=2.31.0
 
 # For system resource monitoring (CPU, RAM, disk, processes)
 psutil>=5.9.0
 
-# For GPU monitoring (NVIDIA graphics cards)
+# ===== OPTIONAL DEPENDENCIES (Feature-Specific) =====
+
+# GPU Monitoring (v1.3.2+) - NVIDIA graphics cards only
 # Official NVIDIA library - works with Python 3.13+
 pynvml>=11.5.0
 
-# For stock market data retrieval
-yfinance>=0.2.79
-matplotlib>=3.7.0  # For plotting stock data
+# Stock Monitor Module (v1.4.0+)
+yfinance>=0.2.28        # Stock market data from Yahoo Finance
+matplotlib>=3.7.0       # Chart visualization
+pandas>=2.0.0           # Data manipulation and analysis
 
+# Media Card on Dashboard (v1.4.1+) - Windows only
+pywin32>=305; sys_platform == 'win32'  # Windows API for Spotify detection
+
+# ===== FUTURE / COMMENTED OUT =====
+
+# Spotify API Integration (future enhancement - currently using local detection)
+# spotipy>=2.22.1  # Official Spotify Web API library
