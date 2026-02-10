@@ -62,7 +62,7 @@ QUOTES = [
 ]
 
 # Path to save tasks
-TASKS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dashboard_tasks.json")
+TASKS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "dashboard_tasks.json")
 
 
 class DashboardModule:

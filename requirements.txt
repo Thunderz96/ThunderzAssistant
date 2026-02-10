@@ -30,6 +30,10 @@ Pillow>=10.0.0  # Image processing for video frames
 # Discord Rich Presence (v1.7.0+) - Social integration
 pypresence>=4.3.0  # Discord Rich Presence integration
 
+# System Tray Icon (v1.10.0+) - Modern app behavior
+pystray>=0.19.5  # System tray icon with menu
+# Note: Pillow already included above for video playback
+
 # ===== FUTURE / COMMENTED OUT =====
 
 # Spotify API Integration (future enhancement - currently using local detection)

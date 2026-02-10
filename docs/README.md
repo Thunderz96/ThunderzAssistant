@@ -1,6 +1,6 @@
 # 📚 Documentation Index
 
-This folder contains all the detailed documentation for Thunderz Assistant.
+Welcome to the Thunderz Assistant documentation! All docs are organized by category for easy navigation.
 
 ---
 
@@ -8,111 +8,108 @@ This folder contains all the detailed documentation for Thunderz Assistant.
 
 **Start here if you're new:**
 
-1. **[QUICKSTART.md](QUICKSTART.md)** - Get up and running in 5 minutes
-   - Installation steps
-   - First run guide
-   - Basic usage
-
-2. **[SECURITY.md](SECURITY.md)** - Protect your API keys
-   - Why API keys shouldn't be committed
-   - Two-config-file system
-   - Setup instructions
-
-3. **[QUICK_SECURITY_SETUP.md](QUICK_SECURITY_SETUP.md)** - Fast security checklist
-   - Immediate action guide
-   - Git tracking verification
-   - Quick fixes
+- **[QUICKSTART.md](QUICKSTART.md)** - Get up and running in 5 minutes
+  - Installation steps
+  - First run guide
+  - Basic usage
 
 ---
 
-## 👨‍💻 For Developers
+## 📁 Documentation Structure
 
-**If you want to modify or extend the app:**
+### 🔧 [setup/](setup/) - Installation & Configuration
+Setup guides for getting Thunderz Assistant running:
 
-1. **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Complete development guide
-   - Project structure
-   - Module system explained
-   - How to create new modules
-   - Coding patterns
-   - Best practices
+- **[SECURITY.md](setup/SECURITY.md)** - Protect your API keys
+- **[QUICK_SECURITY_SETUP.md](setup/QUICK_SECURITY_SETUP.md)** - Fast security checklist
+- **[BACKUP_STRATEGY.md](setup/BACKUP_STRATEGY.md)** - Backup and restore guide
+- **[GLIZZY_SETUP.md](setup/GLIZZY_SETUP.md)** - Glizzy module setup
+- **[SYSTEM_TRAY_SETUP.md](setup/SYSTEM_TRAY_SETUP.md)** - System tray configuration
 
-2. **[CODE_REVIEW.md](CODE_REVIEW.md)** - Code quality assessment
-   - Dashboard module analysis
-   - Strengths and recommendations
-   - Performance tips
+### 📚 [guides/](guides/) - Feature Guides
+In-depth guides for each feature:
+
+#### [Discord Integration](guides/discord/)
+- **[QUICK_START.md](guides/discord/QUICK_START.md)** - Quick Discord setup
+- **[SETUP.md](guides/discord/SETUP.md)** - Detailed Discord configuration
+- **[USAGE_GUIDE.md](guides/discord/USAGE_GUIDE.md)** - Using Discord features
+- **[WEBHOOK_SETUP.md](guides/discord/WEBHOOK_SETUP.md)** - Discord webhook setup
+- **[IMPLEMENTATION.md](guides/discord/IMPLEMENTATION.md)** - Implementation details
+- **[ENHANCED_INTEGRATION.md](guides/discord/ENHANCED_INTEGRATION.md)** - Enhanced features
+- **[COMPLETE_INTEGRATION.md](guides/discord/COMPLETE_INTEGRATION.md)** - Complete integration guide
+- **[VISUAL_GUIDE.md](guides/discord/VISUAL_GUIDE.md)** - Visual walkthrough
+
+#### [File Organizer](guides/file-organizer/)
+- **[GUIDE.md](guides/file-organizer/GUIDE.md)** - File Organizer usage guide
+- **[SAFETY.md](guides/file-organizer/SAFETY.md)** - Safety features explained
+
+#### [Stock Monitor](guides/stock-monitor/)
+- **[GUIDE.md](guides/stock-monitor/GUIDE.md)** - Stock monitoring guide
+- **[ENHANCEMENT.md](guides/stock-monitor/ENHANCEMENT.md)** - Stock monitor v2.0 enhancements
+
+#### [Notification Center](guides/notification-center/)
+- **[GUIDE.md](guides/notification-center/GUIDE.md)** - Notification system guide
+- **[SUMMARY.md](guides/notification-center/SUMMARY.md)** - Notification features summary
+
+#### [UI & Theming](guides/ui/)
+- **[DARK_THEME.md](guides/ui/DARK_THEME.md)** - Dark theme customization
+- **[ENHANCEMENT_GUIDE.md](guides/ui/ENHANCEMENT_GUIDE.md)** - UI enhancement guide
+- **[ENHANCEMENT_SUMMARY.md](guides/ui/ENHANCEMENT_SUMMARY.md)** - UI enhancements summary
+
+### 📦 [versions/](versions/) - Version History
+Release notes and version-specific documentation:
+
+- **[NEW_FEATURES_V1.3.md](versions/NEW_FEATURES_V1.3.md)** - v1.3.0 major features
+- **[BUG_FIXES_V1.3.1.md](versions/BUG_FIXES_V1.3.1.md)** - v1.3.1 enhancements
+- **[FIXES_V1.3.2.md](versions/FIXES_V1.3.2.md)** - v1.3.2 critical fixes
+- **[VERSION_1.4.1_UPDATE.md](versions/VERSION_1.4.1_UPDATE.md)** - v1.4.1 update
+- **[V1.6.0_UPDATE_SUMMARY.md](versions/V1.6.0_UPDATE_SUMMARY.md)** - v1.6.0 update summary
+- **[SYSTEM_TRAY_SUMMARY.md](versions/SYSTEM_TRAY_SUMMARY.md)** - System tray feature
+- **[FOLDER_CLEANUP.md](versions/FOLDER_CLEANUP.md)** - Folder organization update
+
+### 👨‍💻 [development/](development/) - Developer Documentation
+For developers who want to contribute or extend the app:
+
+- **[DEVELOPER_GUIDE.md](development/DEVELOPER_GUIDE.md)** - Complete development guide
+  - Project structure
+  - Module system explained
+  - How to create new modules
+  - Coding patterns & best practices
+- **[CODE_REVIEW.md](development/CODE_REVIEW.md)** - Code quality assessment
+- **[GIT_CHEAT_SHEET.md](development/GIT_CHEAT_SHEET.md)** - Git workflow reference
+
+### 📝 [planning/](planning/) - Future Plans
+Roadmap and planned features:
+
+- **[PLANNED_FEATURES.md](planning/PLANNED_FEATURES.md)** - Feature roadmap
+- **[WHATS_NEXT.md](planning/WHATS_NEXT.md)** - Upcoming features & ideas
 
 ---
 
-## 🎨 Design & Features
-
-**Learn about specific features and updates:**
-
-1. **[DARK_THEME_UPDATE.md](DARK_THEME_UPDATE.md)** - v1.3.0 Dark theme changes
-   - Before/after color schemes
-   - Design philosophy
-   - How to customize colors
-
-2. **[NEW_FEATURES_V1.3.md](NEW_FEATURES_V1.3.md)** - v1.3.0 Major features
-   - Pomodoro Timer documentation
-   - System Monitor documentation
-   - Usage tips
-   - Learning points
-
----
-
-## 🐛 Bug Fixes & Updates
-
-**History of fixes and improvements:**
-
-1. **[BUG_FIXES_V1.3.1.md](BUG_FIXES_V1.3.1.md)** - v1.3.1 Enhancements
-   - Pomodoro threading fix
-   - System Monitor 2.0 features
-   - All drives, top processes, GPU monitoring
-
-2. **[FIXES_V1.3.2.md](FIXES_V1.3.2.md)** - v1.3.2 Critical fixes
-   - GPU library replacement (pynvml)
-   - Scroll position preservation
-   - Installation instructions
-
----
-
-## 📋 Quick Reference
-
-### File Purpose Summary
-
-| Document | Purpose | Read When... |
-|----------|---------|--------------|
-| QUICKSTART.md | Installation & setup | First time using the app |
-| SECURITY.md | API key protection | Setting up config.py |
-| QUICK_SECURITY_SETUP.md | Fast security check | Before first commit |
-| DEVELOPER_GUIDE.md | Dev instructions | Adding new features |
-| CODE_REVIEW.md | Code quality tips | Reviewing code |
-| DARK_THEME_UPDATE.md | Theme documentation | Customizing colors |
-| NEW_FEATURES_V1.3.md | Pomodoro & Monitor | Learning new features |
-| BUG_FIXES_V1.3.1.md | Enhancement details | Understanding v1.3.1 |
-| FIXES_V1.3.2.md | Fix details | Understanding v1.3.2 |
-
----
-
-## 🔍 Looking for Something Specific?
+## 🔍 Quick Find Guide
 
 ### "How do I...?"
 
-- **Install the app** → QUICKSTART.md
-- **Protect my API keys** → SECURITY.md or QUICK_SECURITY_SETUP.md
-- **Create a new module** → DEVELOPER_GUIDE.md
-- **Change the color scheme** → DARK_THEME_UPDATE.md
-- **Use the Pomodoro timer** → NEW_FEATURES_V1.3.md
-- **Enable GPU monitoring** → FIXES_V1.3.2.md
-- **Fix a bug** → Check BUG_FIXES_V1.3.1.md or FIXES_V1.3.2.md
+| Task | Document |
+|------|----------|
+| Install the app | [QUICKSTART.md](QUICKSTART.md) |
+| Protect my API keys | [setup/SECURITY.md](setup/SECURITY.md) |
+| Set up Discord integration | [guides/discord/QUICK_START.md](guides/discord/QUICK_START.md) |
+| Use the File Organizer | [guides/file-organizer/GUIDE.md](guides/file-organizer/GUIDE.md) |
+| Track stocks | [guides/stock-monitor/GUIDE.md](guides/stock-monitor/GUIDE.md) |
+| Customize the theme | [guides/ui/DARK_THEME.md](guides/ui/DARK_THEME.md) |
+| Create a new module | [development/DEVELOPER_GUIDE.md](development/DEVELOPER_GUIDE.md) |
+| Enable GPU monitoring | [versions/FIXES_V1.3.2.md](versions/FIXES_V1.3.2.md) |
 
-### "I want to understand...?"
+### "What's new in...?"
 
-- **Project structure** → DEVELOPER_GUIDE.md
-- **Module system** → DEVELOPER_GUIDE.md
-- **Code quality** → CODE_REVIEW.md
-- **Version history** → ../CHANGELOG.md (in root folder)
-- **What's new** → NEW_FEATURES_V1.3.md
+| Version | Document |
+|---------|----------|
+| v1.3.0 | [versions/NEW_FEATURES_V1.3.md](versions/NEW_FEATURES_V1.3.md) |
+| v1.3.1 | [versions/BUG_FIXES_V1.3.1.md](versions/BUG_FIXES_V1.3.1.md) |
+| v1.3.2 | [versions/FIXES_V1.3.2.md](versions/FIXES_V1.3.2.md) |
+| v1.4.1 | [versions/VERSION_1.4.1_UPDATE.md](versions/VERSION_1.4.1_UPDATE.md) |
+| v1.6.0 | [versions/V1.6.0_UPDATE_SUMMARY.md](versions/V1.6.0_UPDATE_SUMMARY.md) |
 
 ---
 
@@ -121,34 +118,45 @@ This folder contains all the detailed documentation for Thunderz Assistant.
 All documentation follows these principles:
 
 1. **Action-oriented** - Clear steps, not just descriptions
-2. **Well-organized** - Headers, sections, visual hierarchy
+2. **Well-organized** - Logical directory structure
 3. **Beginner-friendly** - Assumes minimal Python knowledge
 4. **Code examples** - Real code snippets when helpful
 5. **Why not just what** - Explains reasoning behind decisions
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing Documentation
 
 If you're adding documentation:
 
-- Keep it in this `docs/` folder
-- Use clear, descriptive filenames
-- Add an entry to this index
-- Follow the markdown formatting style
-- Include code examples where helpful
+1. **Choose the right directory:**
+   - `setup/` - Installation and configuration
+   - `guides/` - Feature-specific tutorials
+   - `versions/` - Release notes
+   - `development/` - Developer documentation
+   - `planning/` - Future features
+
+2. **Follow naming conventions:**
+   - Use descriptive filenames
+   - Keep folder-specific prefixes out (they're implied by location)
+   - Use UPPERCASE.md for documentation files
+
+3. **Update this index:**
+   - Add your new doc to the appropriate section
+   - Include a brief description
 
 ---
 
 ## 📂 Other Important Files
 
-Located in the root directory:
+Located in the project root directory:
 
-- **README.md** - Main project overview (start here!)
-- **CHANGELOG.md** - Version history and updates
-- **requirements.txt** - Python dependencies
-- **config.example.py** - Configuration template
+- **[../README.md](../README.md)** - Main project overview
+- **[../CHANGELOG.md](../CHANGELOG.md)** - Complete version history
+- **[../pyproject.toml](../pyproject.toml)** - Python package configuration
+- **[../requirements.txt](../requirements.txt)** - Python dependencies
+- **[../config.example.py](../config.example.py)** - Configuration template
 
 ---
 
-**Questions?** Check the main README.md in the root folder for project overview and contact info.
+**Questions?** Check the main [README.md](../README.md) for project overview and contact info.

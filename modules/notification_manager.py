@@ -45,6 +45,7 @@ class NotificationManager:
         # File path for persistence
         self.notifications_file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
+            "data",
             "notifications.json"
         )
         

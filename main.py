@@ -36,6 +36,7 @@ from discord_integration_module import DiscordIntegrationModule
 from discord_presence_module import set_instance
 from notification_center_module import NotificationCenterModule
 from notification_manager import get_unread_count, register_observer
+from tray_manager import TrayManager
 
 
 class ToolTip:
@@ -74,6 +75,14 @@ class ThunderzAssistant:
         self.root.geometry("1000x700")
         self.root.minsize(900, 600)
         
+        # Set window icon (taskbar/title bar)
+        icon_path = os.path.join(os.path.dirname(__file__), 'thunderz_icon.ico')
+        if os.path.exists(icon_path):
+            try:
+                self.root.iconbitmap(icon_path)
+            except:
+                pass  # Fallback to default icon if error
+        
         self.api_key = config.NEWS_API_KEY
         if not self.api_key or self.api_key == "YOUR_API_KEY_HERE":
             self.api_key = None
@@ -88,10 +97,33 @@ class ThunderzAssistant:
         self.root.configure(bg=self.colors['background'])
         self.current_module = "Dashboard"
         
+        # Initialize system tray (before UI so it can reference widgets)
+        self.tray_manager = None
+        
         self.create_menu_bar()
         self.create_ui()
         self.create_status_bar()
         self.show_dashboard()
+        
+        # Initialize system tray icon
+        try:
+            self.tray_manager = TrayManager(self.root)
+            # Override window close behavior (minimize to tray instead of exit)
+            self.root.protocol("WM_DELETE_WINDOW", self.on_window_close)
+        except Exception as e:
+            print(f"System tray not available: {e}")
+            # Fall back to normal close behavior
+            self.root.protocol("WM_DELETE_WINDOW", self.root.quit)
+    
+    def on_window_close(self):
+        """
+        Handle window close button.
+        Modern behavior: Minimize to tray instead of exiting.
+        """
+        if self.tray_manager:
+            self.tray_manager.hide_window()
+        else:
+            self.root.quit()
     
     def create_menu_bar(self):
         menubar = Menu(self.root)

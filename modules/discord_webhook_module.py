@@ -347,6 +347,7 @@ See docs/DISCORD_WEBHOOK_SETUP.md for detailed guide."""
             
             stats_file = os.path.join(
                 os.path.dirname(os.path.dirname(__file__)),
+                "data",
                 "pomodoro_stats.json"
             )
             
@@ -410,6 +411,7 @@ See docs/DISCORD_WEBHOOK_SETUP.md for detailed guide."""
             # Get pomodoro stats
             stats_file = os.path.join(
                 os.path.dirname(os.path.dirname(__file__)),
+                "data",
                 "pomodoro_stats.json"
             )
             

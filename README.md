@@ -108,7 +108,16 @@ cd ThunderzAssistant
 pip install -r requirements.txt
 ```
 
-### 3. Configure API Keys (Optional)
+### 3. Set Up Data Directory
+```bash
+# Create data directory and copy example files
+mkdir data
+copy data.example\* data\
+```
+
+**Important:** `data/` contains your personal data and is gitignored!
+
+### 4. Configure API Keys (Optional)
 ```bash
 # Copy the template
 copy config.example.py config.py
@@ -119,7 +128,7 @@ copy config.example.py config.py
 
 **Important:** `config.py` is gitignored for security!
 
-### 4. Run the App
+### 5. Run the App
 ```bash
 python main.py
 ```
@@ -132,15 +141,15 @@ python main.py
 
 - **[📖 Documentation Index](docs/README.md)** - Start here!
 - **[🚀 Quick Start Guide](docs/QUICKSTART.md)** - Detailed setup
-- **[🔐 Security Guide](docs/SECURITY.md)** - Protect API keys
-- **[👨‍💻 Developer Guide](docs/DEVELOPER_GUIDE.md)** - Create modules
-- **[🐛 Bug Fixes Log](docs/)** - Version history details
+- **[🔐 Security Guide](docs/setup/SECURITY.md)** - Protect API keys
+- **[👨‍💻 Developer Guide](docs/development/DEVELOPER_GUIDE.md)** - Create modules
+- **[🐛 Bug Fixes Log](docs/versions/)** - Version history details
 
 **Quick Links:**
-- [How to create a new module](docs/DEVELOPER_GUIDE.md)
-- [How to customize colors](docs/DARK_THEME_UPDATE.md)
-- [Understanding the Pomodoro Timer](docs/NEW_FEATURES_V1.3.md)
-- [Enabling GPU monitoring](docs/FIXES_V1.3.2.md)
+- [How to create a new module](docs/development/DEVELOPER_GUIDE.md)
+- [How to customize colors](docs/guides/ui/DARK_THEME.md)
+- [Understanding the Pomodoro Timer](docs/versions/NEW_FEATURES_V1.3.md)
+- [Enabling GPU monitoring](docs/versions/FIXES_V1.3.2.md)
 
 ---
 
@@ -151,11 +160,24 @@ ThunderzAssistant/
 │
 ├── main.py                      # Application entry point
 ├── requirements.txt             # Python dependencies
+├── pyproject.toml               # Python package configuration
 ├── config.py                    # Your config (gitignored)
 ├── config.example.py            # Config template
 ├── .gitignore                   # Git exclusions
 ├── CHANGELOG.md                 # Version history
 ├── README.md                    # This file
+│
+├── data/                        # 💾 User data (gitignored)
+│   ├── dashboard_tasks.json     # Your quick tasks
+│   ├── notifications.json       # Your notifications
+│   ├── stock_watchlist.json     # Your stock watchlist
+│   └── pomodoro_stats.json      # Your pomodoro stats
+│
+├── data.example/                # 📋 Example templates (committed)
+│   ├── dashboard_tasks.json     # Example tasks format
+│   ├── notifications.json       # Example notifications format
+│   ├── stock_watchlist.json     # Example watchlist format
+│   └── pomodoro_stats.json      # Example stats format
 │
 ├── docs/                        # 📚 All documentation
 │   ├── README.md                # Documentation index
@@ -170,10 +192,17 @@ ThunderzAssistant/
 │   ├── news_module.py           # Breaking news
 │   ├── pomodoro_module.py       # Focus timer
 │   ├── system_monitor_module.py # System stats
+│   ├── stock_monitor_module.py  # Stock tracking
+│   ├── file_organizer_module.py # File organizer
+│   ├── notification_manager.py  # Notification system
 │   └── template_module.py       # Module template
 │
-└── scripts/                     # 🛠️ Utility scripts
-    └── (helper scripts)
+├── tests/                       # 🧪 Test files
+│   ├── test_notifications.py    # Unit tests
+│   └── debug/                   # Debug scripts
+│
+└── media/                       # 🎨 Media assets
+    └── (icons, images)
 ```
 
 ---
@@ -186,7 +215,7 @@ The app features a sleek **dark blue theme**:
 - 💙 Blue accents (#3B82F6)
 - ❌ **Zero white backgrounds!**
 
-**Want to customize?** See [docs/DARK_THEME_UPDATE.md](docs/DARK_THEME_UPDATE.md)
+**Want to customize?** See [docs/guides/ui/DARK_THEME.md](docs/guides/ui/DARK_THEME.md)
 
 ---
 
@@ -270,7 +299,7 @@ Want to add features? It's designed to be modular!
 3. Import in `main.py`
 4. Add sidebar button
 
-**Detailed Guide:** See [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
+**Detailed Guide:** See [docs/development/DEVELOPER_GUIDE.md](docs/development/DEVELOPER_GUIDE.md)
 
 ---
 
@@ -301,7 +330,7 @@ Want to add features? It's designed to be modular!
 - ✅ Always commit `config.example.py` (template)
 - ✅ `config.py` is in `.gitignore`
 
-**Setup guide:** [docs/SECURITY.md](docs/SECURITY.md)
+**Setup guide:** [docs/setup/SECURITY.md](docs/setup/SECURITY.md)
 
 ---
 

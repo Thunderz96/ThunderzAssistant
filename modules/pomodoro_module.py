@@ -415,6 +415,7 @@ class PomodoroModule:
         """
         stats_file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
+            "data",
             "pomodoro_stats.json"
         )
         
@@ -439,6 +440,7 @@ class PomodoroModule:
         """
         stats_file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
+            "data",
             "pomodoro_stats.json"
         )
         

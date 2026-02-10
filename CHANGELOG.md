@@ -2,6 +2,52 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.7.0] - 2026-02-10
+
+### Changed - Project Structure Reorganization
+
+- **Data Directory Structure**: Implemented clean separation of user data
+  - Created `data/` directory for all personal user files (gitignored)
+  - Created `data.example/` directory with example templates (committed to git)
+  - Moved all user data files to `data/` directory:
+    - `dashboard_tasks.json` → `data/dashboard_tasks.json`
+    - `notifications.json` → `data/notifications.json`
+    - `stock_watchlist.json` → `data/stock_watchlist.json`
+    - `pomodoro_stats.json` → `data/pomodoro_stats.json`
+
+- **Benefits**:
+  - ✅ Cleaner root directory structure
+  - ✅ Clear separation between code and data
+  - ✅ Easier backup/restore (just backup `data/` folder)
+  - ✅ Simpler `.gitignore` (ignore entire directory vs individual files)
+  - ✅ Example templates for new users in `data.example/`
+  - ✅ Scalable: easy to add more data files in the future
+
+- **Code Updates**:
+
+  - Updated all module file paths to reference `data/` directory
+  - Updated `.gitignore` with new data directory structure
+  - Updated `config.example.py` with new paths
+  - Added `pyproject.toml` for modern Python packaging
+
+- **Documentation**:
+  - Updated README.md with new project structure diagram
+  - Added setup step for data directory initialization
+  - Updated all file path references in documentation
+
+### Added
+
+- `data.example/` directory with template files for new users
+- `pyproject.toml` for modern Python package configuration
+
+### Migration Notes
+
+- **For existing users**: Your data files have been moved to `data/` directory
+- **For new users**: Copy files from `data.example/` to `data/` on first run
+- No data loss - all existing user data is preserved
+
+---
+
 ## [1.9.0] - 2026-02-09
 
 ### Added - Stock Monitor Watchlist Enhancement

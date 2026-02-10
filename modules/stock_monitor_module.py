@@ -49,6 +49,7 @@ class StockMonitorModule:
         self.watchlist = {}  # {ticker: {price, change, change_pct, last_updated, data}}
         self.watchlist_file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
+            "data",
             "stock_watchlist.json"
         )
         

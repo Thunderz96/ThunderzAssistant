@@ -1,0 +1,14 @@
+{
+  "AAPL": {
+    "price": 150.25,
+    "change": 2.50,
+    "change_pct": 1.69,
+    "last_updated": "2026-01-01T12:00:00.000000"
+  },
+  "MSFT": {
+    "price": 380.00,
+    "change": -1.25,
+    "change_pct": -0.33,
+    "last_updated": "2026-01-01T12:00:00.000000"
+  }
+}

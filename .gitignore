@@ -1,9 +1,11 @@
-# Python
+# ===== PYTHON =====
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Distribution / Packaging
 build/
 develop-eggs/
 dist/
@@ -16,40 +18,131 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Virtual Environment
+# ===== VIRTUAL ENVIRONMENTS =====
 venv/
+.venv/
 ENV/
 env/
+env.bak/
+venv.bak/
 
-# IDE
+# ===== TESTING & COVERAGE =====
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+*.py,cover
+.hypothesis/
+coverage.xml
+nosetests.xml
+
+# ===== TYPE CHECKING =====
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.pyre/
+
+# ===== IDE & EDITORS =====
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# ===== OS FILES =====
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
+*~
 
-# Project specific
-config.py              # Contains actual API keys - NEVER commit this!
-config_local.py
+# ===== ENVIRONMENT & SECRETS =====
+.env
+.env.local
+.env.*.local
+.venv
+*.pem
+*.key
+secrets.json
+
+# ===== LOGS & DATABASES =====
 *.log
-dashboard_tasks.json   # User's personal tasks
-pomodoro_stats.json    # User's personal pomodoro statistics
-notifications.json     # User's personal notifications
-stock_watchlist.json   # User's stock watchlist
-check_git.bat          # Temporary helper script
-config.py
-# Backups folder (local versions only
-backups/ 
+*.log.*
+log/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
 
-docs/GIT_CHEAT_SHEET.md     # Personal git reference (local only)
-V1.6.0_UPDATE_SUMMARY.md  # Deployment summary (local only)
+# ===== TEMPORARY FILES =====
+*.tmp
+*.temp
+*.bak
+*.cache
+*.pid
+*.seed
+*.pid.lock
+~$*
+
+# ===== PROJECT SPECIFIC =====
+# Configuration (contains API keys - NEVER commit!)
+config.py
+config_local.py
+
+# User data directory (personal data - never commit!)
+data/                      # All personal user data files
+
+# BUT allow example templates
+!data.example/             # Example templates are safe to commit
+
+# Backups (local versions only)
+backups/
+
+# Debug & Test artifacts
+debug_*.py                 # Debug scripts
+*_debug.py
+tests/debug/              # Debug subdirectory (keep structure, ignore contents)
+test_results.txt
+results.txt
+*_output.txt
+clear_icon_cache.bat
+
+
+# Temporary scripts & helpers
+check_git.bat
+clear_icon_cache.bat
 install_discord_presence.bat
+*.bat                     # Temporary batch scripts (keep versioned .bat files with git add -f)
+
+# Documentation (local only)
+docs/GIT_CHEAT_SHEET.md
+V1.6.0_UPDATE_SUMMARY.md
+*_UPDATE_SUMMARY.md
+
+# Media cache
+.icon_cache/
+media/cache/
+dashboard_tasks.json

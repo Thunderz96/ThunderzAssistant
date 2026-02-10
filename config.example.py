@@ -47,7 +47,7 @@ WEATHER_AUTO_DETECT = True  # Automatically detect and show location on startup
 
 # Dashboard Module
 DASHBOARD_SHOW_ON_STARTUP = True  # Show dashboard as the default view on launch
-DASHBOARD_TASKS_FILE = "dashboard_tasks.json"  # File to store quick tasks
+DASHBOARD_TASKS_FILE = "data/dashboard_tasks.json"  # File to store quick tasks
 
 # News Module
 # Get your free API key from: https://newsapi.org/register
