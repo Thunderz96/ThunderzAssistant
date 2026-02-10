@@ -1,0 +1,10 @@
+[
+  {
+    "text": "Example task - Click to mark as done",
+    "done": false
+  },
+  {
+    "text": "Completed task example",
+    "done": true
+  }
+]
