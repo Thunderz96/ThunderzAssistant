@@ -7,30 +7,24 @@ This document tracks features planned for future implementation in ThunderzAssis
 ## 🎮 Gaming & Social Integration
 
 ### Discord Rich Presence
-**Status:** Planned
+**Status:** ✅ COMPLETED (v1.7.0)
 **Priority:** High
 **Description:**
 Display what you're currently doing in ThunderzAssistant as your Discord status.
 
-**Proposed Features:**
-- 🎵 Show current Spotify track on Discord
-- 🍅 Display Pomodoro session status ("Focusing - 15:30 remaining")
-- 💻 Show system stats ("Monitoring - CPU: 45%")
-- 📊 Display stock portfolio performance
-- 🎯 Custom status messages per module
-- ⚙️ Toggle on/off in settings
-- 🎨 Custom Discord app ID for branding
+**Implemented Features:**
+- ✅ Show current module on Discord profile
+- ✅ Display Pomodoro session status with live countdown
+- ✅ Automatic updates on module switch
+- ✅ Custom status messages per module
+- ✅ Toggle on/off in settings
+- ✅ Discord Webhooks (send messages to channels)
+- ✅ Quick action buttons (Pomodoro complete, daily report, etc.)
+- ✅ Rich embed support with professional formatting
+- ✅ Combined tabbed UI (Rich Presence + Webhooks)
 
-**Technical Requirements:**
-- `pypresence` library for Discord RPC
-- Discord app registration for custom rich presence
-- Background thread for status updates
-- Privacy controls (user opt-in)
-
-**Use Cases:**
-- Let friends know when you're in a focus session
-- Show off your productivity workflow
-- Share what you're monitoring/tracking
+**Completed:** February 2026
+**Documentation:** See docs/DISCORD_SETUP.md, DISCORD_USAGE_GUIDE.md, DISCORD_WEBHOOK_SETUP.md
 
 ---
 
@@ -273,20 +267,217 @@ Simple note-taking integrated into the dashboard.
 
 ## 🎯 Implementation Priority
 
-### Phase 1 (High Priority)
-1. ✨ **Discord Rich Presence** - Social integration
+### Phase 1 (High Priority) - UPDATED
+1. ✅ ~~**Discord Rich Presence**~~ - **COMPLETED v1.7.0** ✨
 2. 💻 **Tech News Hub** - Windows Updates & Bug tracking
-3. 🎮 **Video Game News** - FF14 & WoW tracking
+3. 📝 **Quick Notes Module** - Simple note-taking (PROMOTED from Phase 3)
+4. 🔔 **Notification Center** - Centralized alerts (NEW!)
 
 ### Phase 2 (Medium Priority)
-4. 📊 **Enhanced Pomodoro Features**
-5. 🖥️ **Advanced System Monitor**
+5. 📊 **Enhanced Pomodoro Features**
+6. 🖥️ **Advanced System Monitor**
+7. 🎮 **Video Game News** - FF14 & WoW tracking
+8. 🔑 **API Key Manager** - Centralized config management (NEW!)
+9. 🚀 **Quick Launcher** - Launch apps/files from within app (NEW!)
 
 ### Phase 3 (Low Priority / Future)
-6. 🎵 **Expanded Media Integration**
-7. 🌐 **GitHub Activity Monitor**
-8. 💰 **Crypto Dashboard Enhancement**
-9. 📝 **Quick Notes Module**
+10. 🎵 **Expanded Media Integration**
+11. 🌐 **GitHub Activity Monitor**
+12. 💰 **Crypto Dashboard Enhancement**
+13. 🎨 **Theme Customizer** - Change colors and fonts (NEW!)
+14. ⏱️ **Screen Time Tracker** - Track time spent in apps (NEW!)
+15. 🔒 **Focus Mode** - Block distracting sites during Pomodoro (NEW!)
+
+---
+
+## 🆕 NEW Feature Ideas (Post-Discord Integration)
+
+### Notification Center
+**Status:** Proposed
+**Priority:** High
+**Description:**
+Centralized notification hub for all modules with history and action buttons.
+
+**Proposed Features:**
+- 🔔 All module notifications in one place
+- 📜 Notification history (last 50 notifications)
+- ⚡ Quick actions from notifications
+- 🔕 Do Not Disturb mode
+- ⏰ Scheduled notifications
+- 📱 Push to mobile (future)
+- 🎨 Custom notification sounds per type
+- 📊 Notification statistics
+
+**Technical Requirements:**
+- Centralized notification queue
+- Persistent notification storage
+- Click handlers for actions
+- Sound playback
+- Badge counter on module
+
+**Why it's useful:**
+- Don't miss important alerts
+- Review past notifications
+- One place for all updates
+- Better notification management
+
+---
+
+### API Key Manager
+**Status:** Proposed  
+**Priority:** Medium
+**Description:**
+Centralized, secure management for all API keys and sensitive config.
+
+**Proposed Features:**
+- 🔑 Visual API key editor (no editing config.py!)
+- 🔒 Encrypted storage for sensitive data
+- ✅ Test API keys before saving
+- 📋 Copy to clipboard with masking
+- 🚨 Alert when keys expire or fail
+- 📝 Help links for each API key setup
+- 🔄 Import/export configs (encrypted)
+
+**Technical Requirements:**
+- AES encryption for sensitive data
+- Separate encrypted config file
+- Key validation APIs
+- UI for key management
+- Secure clipboard handling
+
+**Why it's useful:**
+- Non-technical users can manage keys
+- Never accidentally commit keys to git
+- Validate keys work before saving
+- Encrypted backup of credentials
+
+---
+
+### Quick Launcher
+**Status:** Proposed
+**Priority:** Medium
+**Description:**
+Launch frequently used apps, files, and URLs directly from Thunderz Assistant.
+
+**Proposed Features:**
+- 🚀 Launch apps with one click
+- 📁 Open frequently used folders
+- 🔗 Quick access to bookmarked URLs
+- ⌨️ Custom keyboard shortcuts
+- 📌 Pin favorite launchers
+- 🔍 Search installed applications
+- 📊 Track launch frequency
+- 🎯 Smart suggestions based on usage
+
+**Technical Requirements:**
+- Windows app enumeration
+- File path handling
+- URL validation
+- Keyboard shortcut binding
+- Usage statistics tracking
+- JSON storage for favorites
+
+**Why it's useful:**
+- Everything in one place
+- Faster than Start menu
+- Customize your workflow
+- Track what you use most
+
+---
+
+### Theme Customizer
+**Status:** Proposed
+**Priority:** Low
+**Description:**
+Customize the look and feel of Thunderz Assistant with themes and color schemes.
+
+**Proposed Features:**
+- 🎨 Pre-built themes (Dark, Light, Nord, Dracula, etc.)
+- 🌈 Custom color picker for all UI elements
+- 🖼️ Background image support
+- 📝 Font selection
+- 💾 Save/load custom themes
+- 📤 Export/import themes
+- 👁️ Live preview
+- 🔄 Reset to defaults
+
+**Technical Requirements:**
+- Theme JSON schema
+- Color picker widget
+- Live UI updates
+- Theme validation
+- File import/export
+- Font enumeration
+
+**Why it's useful:**
+- Personalize your workspace
+- Match your desktop theme
+- Better visual comfort
+- Share themes with community
+
+---
+
+### Screen Time Tracker
+**Status:** Proposed
+**Priority:** Low
+**Description:**
+Track time spent in applications and websites for productivity insights.
+
+**Proposed Features:**
+- ⏱️ Automatic time tracking
+- 📊 Daily/weekly/monthly reports
+- 🎯 Set time limits per app
+- 🚨 Alerts when exceeding limits
+- 📈 Productivity score
+- 🔍 Categorize apps (work, entertainment, social)
+- 📱 Idle time detection
+- 📅 Calendar heatmap view
+
+**Technical Requirements:**
+- Active window monitoring
+- Time calculation and storage
+- Category classification
+- Alert system
+- Data visualization
+- SQLite database for history
+
+**Why it's useful:**
+- Understand where time goes
+- Reduce time on distractions
+- Productivity accountability
+- Data-driven improvements
+
+---
+
+### Focus Mode
+**Status:** Proposed
+**Priority:** Medium
+**Description:**
+Block distracting websites and apps during Pomodoro sessions.
+
+**Proposed Features:**
+- 🚫 Website blocker (hosts file modification)
+- 🔒 App blocker (prevent launching)
+- ⏰ Auto-enable during Pomodoro
+- 📝 Whitelist/blacklist management
+- 🎯 Schedule focus periods
+- 🔔 Break reminders
+- 📊 Track focus time
+- 🎨 Fullscreen focus overlay
+
+**Technical Requirements:**
+- Hosts file modification (Windows)
+- Process blocking
+- Scheduled tasks
+- Timer integration with Pomodoro
+- Persistent whitelist/blacklist
+- Administrator privileges
+
+**Why it's useful:**
+- Eliminate distractions
+- Force focus during work sessions
+- Build better habits
+- Increase productivity
 
 ---
 

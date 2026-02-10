@@ -1,36 +1,37 @@
 """
 Stock Market Module for Thunderz Assistant
-Version: 1.0.0 - Initial Release
+Version: 2.0.0 - Watchlist Edition
 
-This module provides both real-time stock monitoring and historical data analysis features. 
-It allows users to track their favorite stocks, view detailed performance metrics, and receive alerts based on customizable thresholds.
+Enhanced stock monitoring with persistent watchlist tracking.
+
 Features:
-- Real-time stock price updates with a sleek, modern interface
-- Historical data visualization with interactive charts
-- Customizable alerts for price changes, volume spikes, and news events
-- Integration with financial news sources for the latest market updates
-- Portfolio management tools to track investments and performance over time
-- User-friendly design with a focus on clarity and ease of use
-- Supports multiple stock exchanges and a wide range of financial instruments
-- Designed to be lightweight and efficient, ensuring smooth performance even with multiple stocks being monitored simultaneously
-- Future updates will include advanced analytics, AI-driven insights, and expanded coverage of global markets.
+- 📊 Watchlist: Track multiple stocks persistently
+- 🔄 Auto-refresh: Automatic updates when opening module
+- 📈 Price tracking: See current price, change %, and change $
+- 🎨 Visual indicators: Green (up), Red (down)
+- ⭐ Quick actions: Add, Remove, Refresh, Plot
+- 💾 Persistent: Watchlist saved between sessions
+- 🔔 Notifications: Optional alerts (integration ready)
 
-Requires: - yfinance (for fetching stock data)
-          - matplotlib (for data visualization)
-          - pandas (for data manipulation)
+Requires:
+- yfinance (for fetching stock data)
+- matplotlib (for data visualization)
 """
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, scrolledtext
 import yfinance as yf
 import matplotlib.pyplot as plt
-import pandas as pd  # Not strictly needed here, but useful if you expand data handling
+import json
+import os
+from datetime import datetime
+import threading
 
 
 class StockMonitorModule:
     """
-    Stock monitor module for Thunderz Assistant.
+    Enhanced Stock Monitor with Watchlist feature.
     
-    This class handles the UI and logic for monitoring stocks.
+    Track stocks over time without fetching manually every time!
     """
 
     def __init__(self, parent_frame, colors):
@@ -39,208 +40,552 @@ class StockMonitorModule:
         
         Args:
             parent_frame: The tkinter frame where this module will be displayed
-                         (This is the content area passed from main.py)
             colors: Dictionary containing the application's color scheme
-                   (This keeps your module matching the app's theme)
         """
         self.parent = parent_frame
         self.colors = colors
         
-        # Initialize stock data storage
-        self.stocks = {}  # Dictionary to store stock data and settings
-        # Example structure: {'AAPL': {'data': DataFrame, 'alerts': [...]}, ...}
+        # Watchlist storage
+        self.watchlist = {}  # {ticker: {price, change, change_pct, last_updated, data}}
+        self.watchlist_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "stock_watchlist.json"
+        )
         
-        # Create the user interface right away
+        # Load saved watchlist
+        self.load_watchlist()
+        
+        # Create the user interface
         self.create_ui()
+        
+        # Auto-refresh watchlist on load
+        if self.watchlist:
+            self.refresh_all_stocks()
 
     def create_ui(self):
-        """
-        Create the user interface for this module.
-        
-        This sets up labels, inputs, buttons, and a results area.
-        """
-        # Title for the module
+        """Create the user interface"""
+        # Title
         title_label = tk.Label(
             self.parent,
             text="📈 Stock Monitor",
-            font=("Arial", 18, "bold"),
-            bg=self.colors['content_bg'],  # Use theme color instead of hardcoding "white"
+            font=("Segoe UI", 20, "bold"),
+            bg=self.colors['content_bg'],
             fg=self.colors['text']
         )
         title_label.pack(pady=20)
         
-        # Description or instructions
+        # Description
         info_label = tk.Label(
             self.parent,
-            text="Enter a stock ticker (e.g., AAPL) to monitor prices and data.",
-            font=("Arial", 12),
+            text="Track stocks in your watchlist. Add VTI, AAPL, or any ticker!",
+            font=("Segoe UI", 11),
             bg=self.colors['content_bg'],
             fg=self.colors['text_dim']
         )
-        info_label.pack(pady=10)
+        info_label.pack(pady=5)
         
-        # Input frame for user input
+        # Input frame
         input_frame = tk.Frame(self.parent, bg=self.colors['content_bg'])
         input_frame.pack(pady=20)
         
-        # Text entry field for stock ticker
+        # Ticker entry
+        tk.Label(
+            input_frame,
+            text="Ticker:",
+            font=("Segoe UI", 11),
+            bg=self.colors['content_bg'],
+            fg=self.colors['text']
+        ).pack(side=tk.LEFT, padx=5)
+        
         self.ticker_entry = tk.Entry(
             input_frame,
-            font=("Arial", 12),
-            width=30
+            font=("Segoe UI", 12),
+            width=15
         )
         self.ticker_entry.pack(side=tk.LEFT, padx=5)
+        self.ticker_entry.bind("<Return>", lambda e: self.add_to_watchlist())
         
-        # Button to add and fetch stock data
-        fetch_button = tk.Button(
+        # Add button
+        tk.Button(
             input_frame,
-            text="Fetch Stock Data",
-            font=("Arial", 12),
-            bg=self.colors['card_bg'],
-            fg=self.colors['text'],
+            text="⭐ Add to Watchlist",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.colors['accent'],
+            fg="white",
             activebackground=self.colors['button_hover'],
             activeforeground="white",
-            relief=tk.FLAT,
             cursor="hand2",
-            command=self.fetch_and_display,  # Calls a method to handle input
+            command=self.add_to_watchlist,
             padx=20,
             pady=5
-        )
-        fetch_button.pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=5)
         
-        # Button to plot data (after fetching)
-        plot_button = tk.Button(
+        # Refresh all button
+        tk.Button(
             input_frame,
-            text="Plot Chart",
-            font=("Arial", 12),
+            text="🔄 Refresh All",
+            font=("Segoe UI", 11),
             bg=self.colors['card_bg'],
             fg=self.colors['text'],
-            activebackground=self.colors['button_hover'],
-            activeforeground="white",
-            relief=tk.FLAT,
             cursor="hand2",
-            command=self.plot_current_stock,  # Calls plot for the last entered ticker
+            command=self.refresh_all_stocks,
             padx=20,
             pady=5
+        ).pack(side=tk.LEFT, padx=5)
+        
+        # Watchlist section
+        watchlist_header = tk.Frame(self.parent, bg=self.colors['content_bg'])
+        watchlist_header.pack(pady=(20, 10), padx=40, fill=tk.X)
+        
+        tk.Label(
+            watchlist_header,
+            text="📊 Your Watchlist",
+            font=("Segoe UI", 16, "bold"),
+            bg=self.colors['content_bg'],
+            fg=self.colors['text']
+        ).pack(side=tk.LEFT)
+        
+        self.watchlist_count = tk.Label(
+            watchlist_header,
+            text=f"({len(self.watchlist)} stocks)",
+            font=("Segoe UI", 11),
+            bg=self.colors['content_bg'],
+            fg=self.colors['text_dim']
         )
-        plot_button.pack(side=tk.LEFT, padx=5)
+        self.watchlist_count.pack(side=tk.LEFT, padx=10)
         
-        # Results frame (where output is displayed)
-        self.results_frame = tk.Frame(self.parent, bg=self.colors['content_bg'])
-        self.results_frame.pack(pady=20, fill=tk.BOTH, expand=True)
-
-    def fetch_and_display(self):
-        """
-        Handle fetching stock data based on user input.
+        # Scrollable watchlist container
+        self.watchlist_frame = tk.Frame(
+            self.parent,
+            bg=self.colors['content_bg']
+        )
+        self.watchlist_frame.pack(pady=10, padx=40, fill=tk.BOTH, expand=True)
         
-        This gets the ticker, adds it if new, fetches data, and displays a summary.
-        """
-        # Get input from the entry field
-        ticker = self.ticker_entry.get().strip().upper()  # Uppercase for consistency (e.g., "aapl" -> "AAPL")
+        # Canvas for scrolling
+        self.canvas = tk.Canvas(
+            self.watchlist_frame,
+            bg=self.colors['content_bg'],
+            highlightthickness=0
+        )
+        self.scrollbar = tk.Scrollbar(
+            self.watchlist_frame,
+            orient=tk.VERTICAL,
+            command=self.canvas.yview
+        )
+        self.scrollable_frame = tk.Frame(self.canvas, bg=self.colors['content_bg'])
         
-        # Validate input
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+        
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor=tk.NW)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Bind mousewheel
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        
+        # Display watchlist
+        self.display_watchlist()
+        
+        # Status label
+        self.status_label = tk.Label(
+            self.parent,
+            text="",
+            font=("Segoe UI", 9, "italic"),
+            bg=self.colors['content_bg'],
+            fg=self.colors['text_dim']
+        )
+        self.status_label.pack(pady=10)
+    
+    def _on_mousewheel(self, event):
+        """Handle mousewheel scrolling"""
+        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    
+    def add_to_watchlist(self):
+        """Add a stock to the watchlist"""
+        ticker = self.ticker_entry.get().strip().upper()
+        
         if not ticker:
             messagebox.showwarning("Input Required", "Please enter a stock ticker!")
+            return
+        
+        if ticker in self.watchlist:
+            messagebox.showinfo("Already Tracked", f"{ticker} is already in your watchlist!")
+            return
+        
+        # Show loading
+        self.status_label.config(text=f"Adding {ticker}...", fg=self.colors['accent'])
+        self.parent.update()
+        
+        # Fetch initial data
+        try:
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period='2d')  # Get 2 days to calculate change
+            
+            if hist.empty:
+                messagebox.showerror("Invalid Ticker", f"Could not find stock: {ticker}")
+                self.status_label.config(text="")
+                return
+            
+            # Get current price and calculate change
+            current_price = hist['Close'].iloc[-1]
+            
+            # Calculate change
+            if len(hist) > 1:
+                prev_price = hist['Close'].iloc[-2]
+                change = current_price - prev_price
+                change_pct = (change / prev_price) * 100
+            else:
+                change = 0
+                change_pct = 0
+            
+            # Add to watchlist
+            self.watchlist[ticker] = {
+                'price': float(current_price),
+                'change': float(change),
+                'change_pct': float(change_pct),
+                'last_updated': datetime.now().isoformat(),
+                'data': hist
+            }
+            
+            # Save watchlist
+            self.save_watchlist()
+            
+            # Clear input
+            self.ticker_entry.delete(0, tk.END)
+            
+            # Refresh display
+            self.display_watchlist()
+            
+            # Send notification
+            self.send_notification(
+                f"Added {ticker}",
+                f"{ticker} added to watchlist at ${current_price:.2f}"
+            )
+            
+            self.status_label.config(
+                text=f"✓ {ticker} added to watchlist!",
+                fg=self.colors['success']
+            )
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to add {ticker}: {str(e)}")
+            self.status_label.config(text="")
+    
+    def remove_from_watchlist(self, ticker):
+        """Remove a stock from the watchlist"""
+        if ticker in self.watchlist:
+            del self.watchlist[ticker]
+            self.save_watchlist()
+            self.display_watchlist()
+            
+            self.status_label.config(
+                text=f"✓ {ticker} removed from watchlist",
+                fg=self.colors['text_dim']
+            )
+    
+    def refresh_stock(self, ticker):
+        """Refresh data for a single stock"""
+        if ticker not in self.watchlist:
+            return
+        
+        self.status_label.config(text=f"Refreshing {ticker}...", fg=self.colors['accent'])
+        self.parent.update()
+        
+        try:
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period='2d')
+            
+            if not hist.empty:
+                current_price = hist['Close'].iloc[-1]
+                
+                # Calculate change
+                if len(hist) > 1:
+                    prev_price = hist['Close'].iloc[-2]
+                    change = current_price - prev_price
+                    change_pct = (change / prev_price) * 100
+                else:
+                    change = 0
+                    change_pct = 0
+                
+                # Update watchlist
+                self.watchlist[ticker]['price'] = float(current_price)
+                self.watchlist[ticker]['change'] = float(change)
+                self.watchlist[ticker]['change_pct'] = float(change_pct)
+                self.watchlist[ticker]['last_updated'] = datetime.now().isoformat()
+                self.watchlist[ticker]['data'] = hist
+                
+                self.save_watchlist()
+                self.display_watchlist()
+                
+                self.status_label.config(
+                    text=f"✓ {ticker} refreshed: ${current_price:.2f}",
+                    fg=self.colors['success']
+                )
+        except Exception as e:
+            self.status_label.config(
+                text=f"✗ Failed to refresh {ticker}",
+                fg=self.colors['danger']
+            )
+    
+    def refresh_all_stocks(self):
+        """Refresh all stocks in watchlist"""
+        if not self.watchlist:
+            messagebox.showinfo("Empty Watchlist", "Add some stocks to your watchlist first!")
+            return
+        
+        self.status_label.config(text="Refreshing all stocks...", fg=self.colors['accent'])
+        self.parent.update()
+        
+        # Refresh in background thread
+        def _refresh():
+            for ticker in list(self.watchlist.keys()):
+                try:
+                    stock = yf.Ticker(ticker)
+                    hist = stock.history(period='2d')
+                    
+                    if not hist.empty:
+                        current_price = hist['Close'].iloc[-1]
+                        
+                        if len(hist) > 1:
+                            prev_price = hist['Close'].iloc[-2]
+                            change = current_price - prev_price
+                            change_pct = (change / prev_price) * 100
+                        else:
+                            change = 0
+                            change_pct = 0
+                        
+                        self.watchlist[ticker]['price'] = float(current_price)
+                        self.watchlist[ticker]['change'] = float(change)
+                        self.watchlist[ticker]['change_pct'] = float(change_pct)
+                        self.watchlist[ticker]['last_updated'] = datetime.now().isoformat()
+                        self.watchlist[ticker]['data'] = hist
+                except:
+                    pass  # Skip failed tickers
+            
+            # Update UI on main thread
+            self.parent.after(0, self.save_watchlist)
+            self.parent.after(0, self.display_watchlist)
+            self.parent.after(0, lambda: self.status_label.config(
+                text="✓ All stocks refreshed!",
+                fg=self.colors['success']
+            ))
+        
+        threading.Thread(target=_refresh, daemon=True).start()
+    
+    def display_watchlist(self):
+        """Display all stocks in watchlist"""
+        # Clear existing
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        
+        # Update count
+        self.watchlist_count.config(text=f"({len(self.watchlist)} stocks)")
+        
+        # Empty state
+        if not self.watchlist:
+            empty_label = tk.Label(
+                self.scrollable_frame,
+                text="📊 Your watchlist is empty!\n\nAdd stocks like VTI, AAPL, TSLA to track them over time.",
+                font=("Segoe UI", 12),
+                bg=self.colors['content_bg'],
+                fg=self.colors['text_dim'],
+                justify=tk.CENTER
+            )
+            empty_label.pack(pady=50)
+            return
+        
+        # Display each stock
+        for ticker, data in sorted(self.watchlist.items()):
+            self.create_stock_card(ticker, data)
+    
+    def create_stock_card(self, ticker, data):
+        """Create a card for a stock"""
+        price = data['price']
+        change = data['change']
+        change_pct = data['change_pct']
+        last_updated = data.get('last_updated', 'Unknown')
+        
+        # Determine color based on change
+        if change > 0:
+            change_color = self.colors['success']
+            arrow = "▲"
+        elif change < 0:
+            change_color = self.colors['danger']
+            arrow = "▼"
+        else:
+            change_color = self.colors['text_dim']
+            arrow = "━"
+        
+        # Card frame
+        card = tk.Frame(
+            self.scrollable_frame,
+            bg=self.colors['card_bg'],
+            relief=tk.RAISED,
+            borderwidth=2
+        )
+        card.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Header (ticker and actions)
+        header = tk.Frame(card, bg=self.colors['card_bg'])
+        header.pack(fill=tk.X, padx=15, pady=(15, 5))
+        
+        # Ticker name (left)
+        tk.Label(
+            header,
+            text=ticker,
+            font=("Segoe UI", 14, "bold"),
+            bg=self.colors['card_bg'],
+            fg=self.colors['text']
+        ).pack(side=tk.LEFT)
+        
+        # Actions (right)
+        actions = tk.Frame(header, bg=self.colors['card_bg'])
+        actions.pack(side=tk.RIGHT)
+        
+        tk.Button(
+            actions,
+            text="📈 Plot",
+            font=("Segoe UI", 9),
+            bg=self.colors['accent'],
+            fg="white",
+            cursor="hand2",
+            command=lambda t=ticker: self.plot_stock(t),
+            padx=10,
+            pady=3
+        ).pack(side=tk.LEFT, padx=2)
+        
+        tk.Button(
+            actions,
+            text="🔄",
+            font=("Segoe UI", 9),
+            bg=self.colors['card_bg'],
+            fg=self.colors['text'],
+            cursor="hand2",
+            command=lambda t=ticker: self.refresh_stock(t),
+            padx=8,
+            pady=3
+        ).pack(side=tk.LEFT, padx=2)
+        
+        tk.Button(
+            actions,
+            text="✕",
+            font=("Segoe UI", 9),
+            bg=self.colors['danger'],
+            fg="white",
+            cursor="hand2",
+            command=lambda t=ticker: self.remove_from_watchlist(t),
+            padx=8,
+            pady=3
+        ).pack(side=tk.LEFT, padx=2)
+        
+        # Price section
+        price_frame = tk.Frame(card, bg=self.colors['card_bg'])
+        price_frame.pack(fill=tk.X, padx=15, pady=10)
+        
+        # Current price
+        tk.Label(
+            price_frame,
+            text=f"${price:.2f}",
+            font=("Segoe UI", 24, "bold"),
+            bg=self.colors['card_bg'],
+            fg=self.colors['text']
+        ).pack(side=tk.LEFT)
+        
+        # Change
+        tk.Label(
+            price_frame,
+            text=f"  {arrow} ${abs(change):.2f} ({change_pct:+.2f}%)",
+            font=("Segoe UI", 14, "bold"),
+            bg=self.colors['card_bg'],
+            fg=change_color
+        ).pack(side=tk.LEFT, padx=10)
+        
+        # Last updated
+        try:
+            updated_time = datetime.fromisoformat(last_updated)
+            time_str = updated_time.strftime("%I:%M %p")
+        except:
+            time_str = "Unknown"
+        
+        tk.Label(
+            card,
+            text=f"Last updated: {time_str}",
+            font=("Segoe UI", 9, "italic"),
+            bg=self.colors['card_bg'],
+            fg=self.colors['text_dim']
+        ).pack(anchor=tk.W, padx=15, pady=(0, 15))
+    
+    def plot_stock(self, ticker):
+        """Plot historical data for a stock"""
+        if ticker not in self.watchlist:
+            return
+        
+        data = self.watchlist[ticker].get('data')
+        if data is None or data.empty:
+            messagebox.showwarning("No Data", f"No data available for {ticker}")
             return
         
         try:
-            # Add the stock if not already monitored
-            self.add_stock(ticker)
-            
-            # Fetch the data (using your existing method)
-            self.fetch_stock_data(ticker)
-            
-            # Get the latest data for display
-            data = self.stocks[ticker]['data']
-            if data is not None and not data.empty:
-                latest_close = data['Close'].iloc[-1]  # Get the most recent close price
-                result = f"Latest close price for {ticker}: ${latest_close:.2f}"
-            else:
-                result = f"No data fetched for {ticker}. Try again later."
-            
-            # Display the result
-            self.display_result(result)
-        
-        except Exception as e:
-            # Handle errors (e.g., invalid ticker or network issue)
-            messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-    def plot_current_stock(self):
-        """
-        Plot the data for the last entered ticker.
-        """
-        ticker = self.ticker_entry.get().strip().upper()
-        if not ticker:
-            messagebox.showwarning("Input Required", "Please enter a stock ticker!")
-            return
-        self.plot_stock_data(ticker)
-
-    def display_result(self, result):
-        """
-        Display results to the user.
-        
-        Args:
-            result: The text to display
-        """
-        # Clear previous results
-        self.clear_results()
-        
-        # Show new result
-        result_label = tk.Label(
-            self.results_frame,
-            text=result,
-            font=("Arial", 14),
-            bg=self.colors['content_bg'],
-            fg=self.colors['text']
-        )
-        result_label.pack(pady=20)
-
-    def clear_results(self):
-        """
-        Clear all widgets from the results display area.
-        """
-        for widget in self.results_frame.winfo_children():
-            widget.destroy()
-
-    def add_stock(self, ticker):
-        """Add a stock to monitor by its ticker symbol."""
-        if ticker not in self.stocks:
-            self.stocks[ticker] = {
-                'data': None,
-                'alerts': []
-            }
-            print(f"Added {ticker} to stock monitor.")  # This prints to console; you could log it instead
-        else:
-            print(f"{ticker} is already being monitored.")
-
-    def fetch_stock_data(self, ticker, period='1d', interval='1m'):
-        """Fetch real-time stock data for the given ticker."""
-        if ticker in self.stocks:
-            stock = yf.Ticker(ticker)
-            self.stocks[ticker]['data'] = stock.history(period=period, interval=interval)
-            print(f"Fetched data for {ticker}.")
-        else:
-            print(f"{ticker} is not being monitored. Please add it first.")
-
-    def plot_stock_data(self, ticker):
-        """Plot historical stock data for the given ticker."""
-        if ticker in self.stocks and self.stocks[ticker]['data'] is not None:
-            data = self.stocks[ticker]['data']
-            plt.figure(figsize=(10, 5))
-            plt.plot(data.index, data['Close'], label='Close Price')
-            plt.title(f"{ticker} Stock Price")
-            plt.xlabel("Date")
-            plt.ylabel("Price")
-            plt.legend()
-            plt.grid()
+            plt.figure(figsize=(12, 6))
+            plt.plot(data.index, data['Close'], label='Close Price', linewidth=2)
+            plt.title(f"{ticker} Stock Price", fontsize=16, fontweight='bold')
+            plt.xlabel("Date", fontsize=12)
+            plt.ylabel("Price ($)", fontsize=12)
+            plt.legend(fontsize=11)
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
             plt.show()
-        else:
-            print(f"No data available for {ticker}. Please fetch it first.")
-
-    def set_alert(self, ticker, condition):
-        """Set an alert for a specific condition (e.g., price above/below a certain value)."""
-        if ticker in self.stocks:
-            self.stocks[ticker]['alerts'].append(condition)
-            print(f"Alert set for {ticker}: {condition}")
-        else:
-            print(f"{ticker} is not being monitored. Please add it first.")
+        except Exception as e:
+            messagebox.showerror("Plot Error", f"Failed to plot {ticker}: {str(e)}")
+    
+    def save_watchlist(self):
+        """Save watchlist to file"""
+        try:
+            # Convert to serializable format
+            save_data = {}
+            for ticker, data in self.watchlist.items():
+                save_data[ticker] = {
+                    'price': data['price'],
+                    'change': data['change'],
+                    'change_pct': data['change_pct'],
+                    'last_updated': data['last_updated']
+                    # Don't save 'data' DataFrame (not JSON serializable)
+                }
+            
+            with open(self.watchlist_file, 'w') as f:
+                json.dump(save_data, f, indent=2)
+        except Exception as e:
+            print(f"Error saving watchlist: {e}")
+    
+    def load_watchlist(self):
+        """Load watchlist from file"""
+        try:
+            if os.path.exists(self.watchlist_file):
+                with open(self.watchlist_file, 'r') as f:
+                    self.watchlist = json.load(f)
+                
+                # Initialize 'data' key for each stock (will be populated on refresh)
+                for ticker in self.watchlist:
+                    self.watchlist[ticker]['data'] = None
+        except Exception as e:
+            print(f"Error loading watchlist: {e}")
+            self.watchlist = {}
+    
+    def send_notification(self, title, message):
+        """Send notification (optional integration)"""
+        try:
+            from notification_manager import send_notification
+            send_notification(
+                title=title,
+                message=message,
+                module="Stock Monitor",
+                notification_type="info",
+                play_sound=False
+            )
+        except:
+            pass  # Notification system not available

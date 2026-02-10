@@ -34,6 +34,8 @@ from file_organizer_module import FileOrganizerModule
 from glizzy_module import GlizzyModule
 from discord_integration_module import DiscordIntegrationModule
 from discord_presence_module import set_instance
+from notification_center_module import NotificationCenterModule
+from notification_manager import get_unread_count, register_observer
 
 
 class ToolTip:
@@ -136,6 +138,7 @@ class ThunderzAssistant:
         
         modules = [
             ("📊", "Dashboard", "Overview of your day", self.show_dashboard),
+            ("🔔", "Notifications", "View all notifications", self.show_notifications),
             ("📰", "News", "Latest breaking news", self.show_news),
             ("🌤️", "Weather", "Current weather conditions", self.show_weather),
             ("🍅", "Pomodoro", "Focus timer for productivity", self.show_pomodoro),
@@ -147,16 +150,39 @@ class ThunderzAssistant:
         ]
         
         self.module_buttons = {}
+        self.notification_badge = None
         for icon, name, tooltip, command in modules:
-            btn = tk.Button(sidebar, text=f"{icon}  {name}", font=("Segoe UI", 11),
+            # Create button frame to hold button + badge
+            btn_container = tk.Frame(sidebar, bg=self.colors['secondary'])
+            btn_container.pack(fill=tk.X, padx=10, pady=3)
+            
+            btn = tk.Button(btn_container, text=f"{icon}  {name}", font=("Segoe UI", 11),
                           bg=self.colors['card_bg'], fg=self.colors['text'],
                           activebackground=self.colors['button_hover'], activeforeground="white",
                           relief=tk.FLAT, cursor="hand2",
                           command=lambda n=name, c=command: self.switch_module(n, c),
                           anchor="w", padx=15, pady=10)
-            btn.pack(fill=tk.X, padx=10, pady=3)
+            btn.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             ToolTip(btn, tooltip)
             self.module_buttons[name] = btn
+            
+            # Add badge for Notifications module
+            if name == "Notifications":
+                unread = get_unread_count()
+                if unread > 0:
+                    self.notification_badge = tk.Label(
+                        btn_container,
+                        text=str(unread) if unread < 100 else "99+",
+                        font=("Segoe UI", 9, "bold"),
+                        bg=self.colors['danger'],
+                        fg="white",
+                        padx=6,
+                        pady=2
+                    )
+                    self.notification_badge.pack(side=tk.RIGHT, padx=5)
+        
+        # Register observer for notification changes to update badge
+        register_observer(self.update_notification_badge)
         
         help_frame = tk.Frame(sidebar, bg=self.colors['secondary'])
         help_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=10)
@@ -213,6 +239,7 @@ class ThunderzAssistant:
         # Custom messages per module
         discord_messages = {
             "Dashboard": "Viewing dashboard",
+            "Notifications": "Checking notifications",
             "News": "Reading breaking news",
             "Weather": "Checking weather forecast",
             "Pomodoro": "Using focus timer",
@@ -231,14 +258,34 @@ class ThunderzAssistant:
                   "Weather": self.show_weather, "Pomodoro": self.show_pomodoro,
                   "System": self.show_system_monitor, "Stocks": self.show_stock_monitor,
                   "Organizer": self.show_file_organizer, "Discord": self.show_discord_integration,
-                  "Glizzy": self.show_glizzy_module}
+                  "Notifications": self.show_notifications, "Glizzy": self.show_glizzy_module}
         if self.current_module in modules:
             modules[self.current_module]()
+    
+    def update_notification_badge(self):
+        """Update notification badge count"""
+        try:
+            unread = get_unread_count()
+            if self.notification_badge:
+                if unread > 0:
+                    self.notification_badge.config(
+                        text=str(unread) if unread < 100 else "99+"
+                    )
+                    self.notification_badge.pack(side=tk.RIGHT, padx=5)
+                else:
+                    self.notification_badge.pack_forget()
+        except:
+            pass  # Widget might not exist yet
     
     def show_dashboard(self):
         self.clear_content()
         DashboardModule(self.content_frame, self.colors)
         self.update_status("Dashboard", "Your daily overview at a glance")
+    
+    def show_notifications(self):
+        self.clear_content()
+        NotificationCenterModule(self.content_frame, self.colors)
+        self.update_status("Notifications", "View and manage all notifications")
     
     def show_weather(self):
         self.clear_content()

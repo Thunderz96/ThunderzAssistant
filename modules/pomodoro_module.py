@@ -285,6 +285,7 @@ class PomodoroModule:
         - Updating pomodoro count
         - Switching between work/break sessions
         - Saving stats
+        - Sending notifications
         """
         self.is_running = False
         self.start_button.config(text="▶ Start")
@@ -297,6 +298,9 @@ class PomodoroModule:
             self.pomodoros_completed += 1
             self.total_today += 1
             self.save_stats()
+            
+            # Send notification
+            self.send_pomodoro_notification()
             
             # Update progress indicator
             self.update_progress_indicator()
@@ -368,6 +372,39 @@ class PomodoroModule:
         self.stats_label.config(
             text=f"Completed: {self.total_today} pomodoros\nFocus time: {focus_minutes} minutes"
         )
+    
+    def send_pomodoro_notification(self):
+        """Send notification when Pomodoro completes"""
+        try:
+            from notification_manager import send_notification
+            
+            focus_minutes = self.total_today * 25
+            
+            # Determine next session type
+            if self.pomodoros_completed % 4 == 0:
+                next_session = "Long Break (15 min)"
+            else:
+                next_session = "Short Break (5 min)"
+            
+            send_notification(
+                title=f"🍅 Pomodoro #{self.pomodoros_completed} Complete!",
+                message=f"Great work! You've completed {self.total_today} pomodoros today ({focus_minutes} minutes).\n\nTime for a {next_session}",
+                module="Pomodoro",
+                notification_type="success",
+                actions=[
+                    {
+                        "label": "View Stats",
+                        "callback": lambda: None  # Could navigate to stats view
+                    },
+                    {
+                        "label": "Start Break",
+                        "callback": self.toggle_timer
+                    }
+                ],
+                play_sound=False  # We already played a beep
+            )
+        except Exception as e:
+            print(f"Error sending notification: {e}")
     
     def load_stats(self):
         """

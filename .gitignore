@@ -43,6 +43,8 @@ config_local.py
 *.log
 dashboard_tasks.json   # User's personal tasks
 pomodoro_stats.json    # User's personal pomodoro statistics
+notifications.json     # User's personal notifications
+stock_watchlist.json   # User's stock watchlist
 check_git.bat          # Temporary helper script
 config.py
 # Backups folder (local versions only

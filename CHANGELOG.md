@@ -2,6 +2,127 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.9.0] - 2026-02-09
+
+### Added - Stock Monitor Watchlist Enhancement
+- **Persistent Watchlist**: Track multiple stocks without re-fetching every time
+  - Add stocks to watchlist with one click (e.g., VTI, AAPL, TSLA)
+  - Track unlimited stocks simultaneously
+  - Watchlist persists between sessions (stock_watchlist.json)
+  - Auto-refresh when opening module
+  - Manual refresh for all stocks or individual stocks
+  
+- **Enhanced Stock Display**:
+  - Current price (large, clear display)
+  - Dollar change (± $X.XX)
+  - Percentage change (± X.XX%)
+  - Color-coded indicators: 🟢 Green (up), 🔴 Red (down), ⚪ Gray (flat)
+  - Visual arrows: ▲ (up), ▼ (down), ━ (flat)
+  - Last updated timestamp
+  
+- **Quick Actions**:
+  - 📈 Plot: View historical price chart
+  - 🔄 Refresh: Update individual stock
+  - ✕ Remove: Delete from watchlist
+  - 🔄 Refresh All: Update entire watchlist
+  
+- **Smart Features**:
+  - Background refresh (non-blocking UI)
+  - Threaded updates for multiple stocks
+  - Empty state with helpful instructions
+  - Scrollable watchlist for many stocks
+  - Notification integration (notifies when stocks added)
+
+### Changed
+- Stock Monitor completely rewritten (v1.0 → v2.0)
+- Code size: 246 lines → 592 lines (+346 lines)
+- UI redesigned with card-based layout
+- Improved error handling and validation
+- Better user feedback with status messages
+
+### Technical Details
+- Persistent storage: stock_watchlist.json (gitignored)
+- Data structure: ticker → {price, change, change_pct, last_updated, data}
+- yfinance 2-day period for change calculation
+- Threading for parallel stock updates
+- Observer pattern ready for future price alerts
+- Notification system integration
+
+### Documentation
+- Added STOCK_MONITOR_GUIDE.md: Complete user and developer guide (553 lines)
+- Added STOCK_MONITOR_ENHANCEMENT.md: Implementation summary (475 lines)
+
+---
+
+## [1.8.0] - 2026-02-09
+
+### Added - Notification Center
+- **Centralized Notification System**: All modules can send notifications
+  - New Notification Center module in sidebar
+  - Unified notification display with history
+  - Persistent storage (notifications.json)
+  - Real-time updates via observer pattern
+  
+- **Notification Features**:
+  - 4 notification types: Info (🔵), Success (🟢), Warning (🟡), Error (🔴)
+  - Color-coded borders and icons
+  - Relative timestamps ("5 minutes ago")
+  - Mark as read/unread
+  - Dismiss individual or clear all
+  - Action buttons with callbacks
+  - Sound notifications (optional)
+  - Auto-dismiss option (configurable)
+  
+- **UI Components**:
+  - Unread badge counter on sidebar (red badge with count)
+  - Filter toggle (Show All / Unread Only)
+  - Do Not Disturb (DND) mode
+  - Scrollable notification list
+  - Empty state with helpful message
+  - Auto-refresh when new notifications arrive
+  
+- **Module Integration**:
+  - Pomodoro: Sends notification on completion with action buttons
+  - Stock Monitor: Notifies when stocks added to watchlist
+  - Easy integration for all future modules
+  
+- **Advanced Features**:
+  - Observer pattern for real-time UI updates
+  - Thread-safe operations
+  - Persistent history (last 100 notifications)
+  - Action callbacks with automatic dismissal
+  - Badge updates automatically on changes
+
+### Technical Details
+- NotificationManager: Singleton backend (402 lines)
+- NotificationCenterModule: UI frontend (462 lines)
+- Storage: notifications.json (gitignored)
+- Observer pattern for real-time updates
+- Convenience functions: send_notification(), get_notifications(), etc.
+- Thread-safe notification queue
+
+### Documentation
+- Added NOTIFICATION_CENTER_GUIDE.md: Complete guide (520 lines)
+- Added NOTIFICATION_CENTER_SUMMARY.md: Implementation summary (564 lines)
+- Added test_notifications.py: Test script with 10 example notifications (209 lines)
+
+### Developer API
+```python
+from notification_manager import send_notification
+
+send_notification(
+    title="Task Complete",
+    message="Your file has been organized!",
+    module="File Organizer",
+    notification_type="success",
+    actions=[
+        {"label": "Open Folder", "callback": open_function}
+    ]
+)
+```
+
+---
+
 ## [1.6.0] - 2026-02-09
 
 ### Added - Major UI/UX Enhancement
@@ -405,20 +526,69 @@ All notable changes to Thunderz Assistant will be documented in this file.
 
 ## Future Plans
 
-### Planned Features
+### Recently Completed ✅
+- ~~Notification Center~~ - **Completed in v1.8.0**
+- ~~Stock Watchlist~~ - **Completed in v1.9.0**
+- ~~File Organizer~~ - **Completed in v1.5.0**
+
+### High Priority
+- **Quick Launcher**: Launch apps and files from Thunderz Assistant
+  - Pin favorite applications
+  - Quick folder access
+  - URL bookmarks
+  - Keyboard shortcuts
+  - Launch frequency tracking
+  
+- **Theme Customizer**: Customize colors and appearance
+  - Pre-built themes (Dark, Light, Nord, Dracula)
+  - Custom color picker
+  - Font selection
+  - Export/import themes
+  - Live preview
+
+- **Enhanced Pomodoro**:
+  - Customizable durations (not just 25/5/15)
+  - Weekly/monthly statistics
+  - Productivity graphs
+  - Daily goals and streaks
+  - Achievement system
+  - Task labels per session
+  - Export stats to CSV
+
+### Medium Priority
+- **Stock Monitor Enhancements**:
+  - Price alerts (notify when target reached)
+  - Portfolio tracking (track actual holdings)
+  - News integration
+  - Advanced charts (1W, 1M, 1Y views)
+  - Technical indicators (MA, RSI, MACD)
+  
+- **Tech News Hub**:
+  - Windows Updates tracker
+  - Security alerts (CVE notifications)
+  - Hardware news
+  - Software releases
+  
+- **Focus Mode**:
+  - Block distracting websites during Pomodoro
+  - App blocker
+  - Scheduled focus periods
+  - Focus time tracking
+
+### Low Priority / Future
 - Mac/Linux support for Media Card
 - Full Spotify API integration (pending approval)
 - Support for more media players (iTunes, VLC, YouTube Music, etc.)
-- Additional stock market features (options, futures)
 - Habit tracker module
 - Note-taking tool
 - Unit converter
-- File organizer
-- Dark mode toggle (light theme option)
+- Discord Rich Presence enhancements
+- GitHub Activity Monitor
+- Crypto Dashboard
+- Screen Time Tracker
 
 ### In Progress
-- Media Card: Song title detection refinement
-- Spotify API integration (app approval pending)
+- None currently - ready for next feature!
 
 ---
 
