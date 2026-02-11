@@ -1,0 +1,12 @@
+{
+  "widgets": [
+    {"id": "weather", "enabled": true, "order": 0},
+    {"id": "quote", "enabled": true, "order": 1},
+    {"id": "media", "enabled": true, "order": 2},
+    {"id": "pomodoro_stats", "enabled": false, "order": 3},
+    {"id": "tasks_summary", "enabled": false, "order": 4},
+    {"id": "notes_recent", "enabled": false, "order": 5}
+  ],
+  "columns": 3,
+  "tasks_visible": true
+}

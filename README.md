@@ -1,99 +1,100 @@
 # ⚡ Thunderz Assistant
 
-A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, and workflow optimization!
+A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, note-taking, and workflow optimization!
 
 ---
 
-## 🎯 Current Version: **1.6.0**
+## 🎯 Current Version: **1.10.0**
 
-### 🎨 What's New in v1.6.0?
-- **Menu Bar**: Professional menu system (File, View, Help)
-- **Status Bar**: Module indicator, tips, and version display
-- **Tooltips**: Helpful hints on hover for all buttons
-- **Keyboard Shortcuts**: Ctrl+1,2,3 for quick navigation, F5 to refresh
-- **Built-in Help**: Quick Start Guide, shortcuts reference, and documentation access
-- **Active Highlighting**: Visual feedback showing current module
-- **Looping Video**: Glizzy module video now loops continuously
-- **Modern Design**: Segoe UI font, better spacing, professional appearance
+### 🎨 What's New?
+- **📝 Quick Notes**: Full markdown note-taking system with categories and search.
+- **⚙️ Configurable Dashboard**: Toggle, reorder, and customize widgets via settings.
+- **🍅 Pomodoro v2**: Custom timer durations, task labeling, and visual stats charts.
+- **📊 New Widgets**: Recent Notes and Focus Stats added to the dashboard.
+- **🛡️ Secure Data**: Clean separation of user data (`data/`) from app templates.
 
 ---
 
 ## ⌨️ Keyboard Shortcuts
 
-Make your workflow faster with these hotkeys:
+Maximize efficiency with these global hotkeys:
 
 | Shortcut | Action |
 |----------|--------|
 | **Ctrl+1** | Jump to Dashboard |
 | **Ctrl+2** | Jump to News |
 | **Ctrl+3** | Jump to Weather |
+| **Ctrl+4** | Jump to Notes |
 | **F5** | Refresh current module |
 | **Ctrl+Q** | Quit application |
 
-💡 **Tip:** Hover over any button for helpful tooltips!
+💡 **Tip:** Hover over any sidebar button for helpful tooltips!
 
 ---
 
 ## ✨ Features
 
 ### 📊 Dashboard (Home Screen)
-Your daily command center:
-- ⏰ **Live clock** with time-based greetings
-- 📅 **Current date** display
-- 🌤️ **Weather summary** with auto-location
-- 🎵 **Now Playing** - Spotify status (Windows)
-- 💡 **Daily motivational quote** (30+ quotes)
-- ✅ **Quick Tasks** with persistence
+Your fully customizable daily command center:
+- ⚙️ **Widget System**: Enable/disable and reorder widgets via Settings.
+- ⏰ **Live Clock**: Time-based greetings with your custom username.
+- 🌤️ **Weather & Quotes**: Auto-updating info cards.
+- 🎵 **Now Playing**: Live Spotify status tracking (Windows).
+- 🍅 **Focus Stats**: Track your daily Pomodoro progress at a glance.
+- 📝 **Recent Notes**: Quick access to your latest ideas.
+- ✅ **Quick Tasks**: Persistent to-do list for immediate goals.
 
-### 🍅 Pomodoro Timer
-Focus timer using the Pomodoro Technique:
-- ⏱️ **25-minute work sessions**
-- ☕ **5-minute short breaks**
-- 🌴 **15-minute long breaks** (after 4 pomodoros)
-- 📊 **Daily tracking** with statistics
-- 🔔 **Sound notifications**
+### 📝 Quick Notes
+Lightweight, markdown-ready notebook:
+- ✨ **Rich Text**: Headers (#), lists (-), bold (**), and italic (*) rendering.
+- 🏷️ **Organize**: Filter by Category (Work, Personal, Ideas) or Tags.
+- 📌 **Pinning**: Keep important notes at the top.
+- 🔍 **Instant Search**: Real-time filtering by title or content.
+- 💾 **Auto-save**: Notes are saved instantly to JSON.
 
-### 💻 System Monitor
-Real-time computer stats:
-- 🔥 **CPU usage** (total + per-core)
-- 🧠 **RAM usage** with progress bars
-- 💾 **All storage drives** (not just C:)
-- ⚡ **Top 5 CPU processes**
-- 🧠 **Top 5 RAM processes**
-- 🎮 **GPU monitoring** (NVIDIA cards)
-- ⏱️ **System uptime**
+### 🍅 Pomodoro Timer (v2)
+Advanced focus system for deep work:
+- ⏱️ **Customizable**: Set your own Work, Short Break, and Long Break durations.
+- 🏷️ **Task Labeling**: Track exactly what you worked on during each session.
+- 📊 **Visual Stats**: View bar charts of your focus time (Last 7/30 days).
+- 🎯 **Daily Goals**: Set session targets and track progress visually.
+- 🔔 **Notifications**: Sound alerts and system tray notifications on completion.
+
+### 🔔 Notification Center
+Centralized hub for all app alerts:
+- 🔴 **Unified History**: View alerts from all modules in one place.
+- 🔢 **Badges**: Red counter on sidebar for unread items.
+- 🎨 **Types**: distinct styles for Info, Success, Warning, and Error.
+- 🔕 **Do Not Disturb**: Mute notifications when focusing.
 
 ### 📈 Stock Monitor
-Real-time stock market tracking:
-- 📊 **Live stock prices** (stocks, ETFs, crypto)
-- 📈 **Historical charts** (1D, 1W, 1M, 1Y, 5Y)
-- 💼 **Portfolio tracking** with P&L
-- 🔔 **Price alerts** (customizable thresholds)
-- ⏱️ **Auto-refresh** every 60 seconds
+Real-time market tracking:
+- 💼 **Watchlist**: Track unlimited stocks, ETFs, and Crypto.
+- 📊 **Live Data**: Real-time prices, daily change, and % gain/loss.
+- 📉 **Charts**: Interactive historical charts (1D, 1W, 1M, 1Y, 5Y).
+- 🔄 **Smart Refresh**: Threaded background updates to keep UI smooth.
+
+### 💻 System Monitor
+Keep an eye on your hardware:
+- 🔥 **CPU**: Total load + per-core breakdown.
+- 🧠 **RAM**: Real-time usage with progress bars.
+- 💾 **Storage**: Monitor all connected drives.
+- 🎮 **GPU**: NVIDIA GPU load, temperature, and memory usage.
+- ⚡ **Processes**: Top 5 CPU and RAM hogs.
 
 ### 📁 File Organizer
-Automatically organize messy folders:
-- 🔍 **Scan any folder** (default: Downloads)
-- 📊 **File type breakdown** (70+ extensions)
-- ✨ **One-click organization** into category folders
-- ↩️ **Undo functionality** to restore structure
-- 🛡️ **Safe mode** (handles duplicates automatically)
-- 🚫 **System protection** (30+ forbidden folders blocked)
-- ✅ **Safety indicator** (visual confirmation)
-- 📂 **8 categories**: Images, Documents, Videos, Audio, Archives, Code, Executables, Other
+Clean up messy folders instantly:
+- 🧹 **One-Click Clean**: Sorts files into Images, Docs, Videos, Code, etc.
+- 🛡️ **Safety First**: Detects duplicates and protects system folders.
+- ↩️ **Undo**: Made a mistake? Revert changes instantly.
 
-### 🌤️ Weather Checker
-Real-time weather for any city:
-- 🌍 **Auto-location detection**
-- 📍 **"My Location" button**
-- 🌡️ **Temperature** (°C and °F)
-- 💨 **Wind, humidity, UV index**
+### 🌤️ Weather & 📰 News
+- **Weather**: Auto-detects location for live temperature, humidity, and wind.
+- **News**: Top headlines from around the world (requires API key).
 
-### 📰 Breaking News
-Top headlines (requires free API key):
-- 📱 **Top 5 news stories**
-- 🔗 **Clickable article links**
-- 🎨 **Card-style layout**
+### 🎮 Discord Integration
+- **Rich Presence**: Shows exactly what you're doing (e.g., "Writing Notes", "Focusing").
+- **Webhooks**: Send messages to Discord channels directly from the app.
 
 ---
 
@@ -106,7 +107,6 @@ Python 3.7+ required. [Download here](https://www.python.org/downloads/)
 ```bash
 cd ThunderzAssistant
 pip install -r requirements.txt
-```
 
 ### 3. Set Up Data Directory
 ```bash
@@ -153,59 +153,41 @@ python main.py
 
 ---
 
-## 📁 Project Structure
-
-```
 ThunderzAssistant/
 │
 ├── main.py                      # Application entry point
 ├── requirements.txt             # Python dependencies
-├── pyproject.toml               # Python package configuration
-├── config.py                    # Your config (gitignored)
+├── pyproject.toml               # Package config
+├── config.py                    # Your secrets (gitignored)
 ├── config.example.py            # Config template
-├── .gitignore                   # Git exclusions
-├── CHANGELOG.md                 # Version history
-├── README.md                    # This file
 │
-├── data/                        # 💾 User data (gitignored)
-│   ├── dashboard_tasks.json     # Your quick tasks
-│   ├── notifications.json       # Your notifications
-│   ├── stock_watchlist.json     # Your stock watchlist
-│   └── pomodoro_stats.json      # Your pomodoro stats
+├── data/                        # 💾 YOUR DATA (gitignored)
+│   ├── dashboard_config.json    # Dashboard layout
+│   ├── notes.json               # Your notes
+│   ├── pomodoro_stats.json      # Focus history
+│   ├── stock_watchlist.json     # Market portfolio
+│   └── ...
 │
-├── data.example/                # 📋 Example templates (committed)
-│   ├── dashboard_tasks.json     # Example tasks format
-│   ├── notifications.json       # Example notifications format
-│   ├── stock_watchlist.json     # Example watchlist format
-│   └── pomodoro_stats.json      # Example stats format
+├── data.example/                # 📋 Default templates
+│   ├── notes.json
+│   ├── dashboard_config.json
+│   └── ...
 │
-├── docs/                        # 📚 All documentation
-│   ├── README.md                # Documentation index
-│   ├── QUICKSTART.md
-│   ├── DEVELOPER_GUIDE.md
-│   ├── SECURITY.md
-│   └── ... (version docs)
+├── modules/                     # 🔧 Feature Modules
+│   ├── dashboard_module.py      # Home screen & Widgets
+│   ├── notes_module.py          # Quick Notes logic
+│   ├── pomodoro_module.py       # Timer & Stats
+│   ├── stock_monitor_module.py  # Market tracker
+│   ├── system_monitor_module.py # Hardware stats
+│   ├── notification_center_module.py
+│   ├── file_organizer_module.py
+│   ├── weather_module.py
+│   └── ...
 │
-├── modules/                     # 🔧 Feature modules
-│   ├── dashboard_module.py      # Dashboard home screen
-│   ├── weather_module.py        # Weather checker
-│   ├── news_module.py           # Breaking news
-│   ├── pomodoro_module.py       # Focus timer
-│   ├── system_monitor_module.py # System stats
-│   ├── stock_monitor_module.py  # Stock tracking
-│   ├── file_organizer_module.py # File organizer
-│   ├── notification_manager.py  # Notification system
-│   └── template_module.py       # Module template
-│
-├── tests/                       # 🧪 Test files
-│   ├── test_notifications.py    # Unit tests
-│   └── debug/                   # Debug scripts
-│
-└── media/                       # 🎨 Media assets
-    └── (icons, images)
-```
-
----
+└── docs/                        # 📚 Documentation
+    ├── QUICKSTART.md
+    ├── DEVELOPER_GUIDE.md
+    └── ...
 
 ## 🎨 Dark Theme
 
@@ -258,7 +240,7 @@ The app features a sleek **dark blue theme**:
 
 ## 🆕 Recent Updates
 
-### v1.5.0 (Latest)
+### v1.5.0 
 - ✅ File Organizer module
 - ✅ Auto-organize folders by file type
 - ✅ 70+ file extensions supported

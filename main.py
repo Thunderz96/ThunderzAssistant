@@ -1,6 +1,6 @@
 """
 Thunderz Assistant - Enhanced UI Version
-Version: 1.6.0
+Version: 1.7.0
 
 This is a modernized version with:
 - Menu bar (File, View, Help)
@@ -28,6 +28,7 @@ from weather_module import WeatherModule
 from dashboard_module import DashboardModule
 from news_module import NewsModule
 from pomodoro_module import PomodoroModule
+from notes_module import NotesModule
 from system_monitor_module import SystemMonitorModule
 from stock_monitor_module import StockMonitorModule
 from file_organizer_module import FileOrganizerModule
@@ -71,9 +72,11 @@ class ToolTip:
 class ThunderzAssistant:
     def __init__(self, root):
         self.root = root
-        self.root.title("⚡ Thunderz Assistant v1.6.0")
-        self.root.geometry("1000x700")
-        self.root.minsize(900, 600)
+        self.root.title("⚡ Thunderz Assistant v1.7.0")
+        
+        # INCREASED SIZE: 1200x850 to fit all modules
+        self.root.geometry("1200x850")
+        self.root.minsize(1000, 700)
         
         # Set window icon (taskbar/title bar)
         icon_path = os.path.join(os.path.dirname(__file__), 'thunderz_icon.ico')
@@ -140,6 +143,7 @@ class ThunderzAssistant:
         view_menu.add_command(label="Dashboard", command=self.show_dashboard, accelerator="Ctrl+1")
         view_menu.add_command(label="News", command=self.show_news, accelerator="Ctrl+2")
         view_menu.add_command(label="Weather", command=self.show_weather, accelerator="Ctrl+3")
+        view_menu.add_command(label="Notes", command=self.show_notes, accelerator="Ctrl+4")
         
         help_menu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
@@ -154,6 +158,7 @@ class ThunderzAssistant:
         self.root.bind("<Control-1>", lambda e: self.show_dashboard())
         self.root.bind("<Control-2>", lambda e: self.show_news())
         self.root.bind("<Control-3>", lambda e: self.show_weather())
+        self.root.bind("<Control-4>", lambda e: self.show_notes())
     
     def create_ui(self):
         main_container = tk.Frame(self.root, bg=self.colors['background'])
@@ -174,6 +179,7 @@ class ThunderzAssistant:
             ("📰", "News", "Latest breaking news", self.show_news),
             ("🌤️", "Weather", "Current weather conditions", self.show_weather),
             ("🍅", "Pomodoro", "Focus timer for productivity", self.show_pomodoro),
+            ("📝", "Notes", "Quick notes with markdown", self.show_notes),
             ("💻", "System", "Monitor system resources", self.show_system_monitor),
             ("📈", "Stocks", "Track stock market prices", self.show_stock_monitor),
             ("📁", "Organizer", "Clean up messy folders", self.show_file_organizer),
@@ -242,7 +248,7 @@ class ThunderzAssistant:
                                         fg=self.colors['text_dim'])
         self.status_tip_label.pack(side=tk.LEFT, expand=True)
         
-        tk.Label(self.status_bar, text="v1.6.0", font=("Segoe UI", 9),
+        tk.Label(self.status_bar, text="v1.7.0", font=("Segoe UI", 9),
                 bg=self.colors['secondary'], fg=self.colors['text_dim'],
                 anchor="e", padx=10).pack(side=tk.RIGHT)
     
@@ -275,6 +281,7 @@ class ThunderzAssistant:
             "News": "Reading breaking news",
             "Weather": "Checking weather forecast",
             "Pomodoro": "Using focus timer",
+            "Notes": "Writing quick notes",
             "System": "Monitoring system resources",
             "Stocks": "Tracking stock portfolio",
             "Organizer": "Organizing files",
@@ -288,6 +295,7 @@ class ThunderzAssistant:
     def refresh_current_module(self):
         modules = {"Dashboard": self.show_dashboard, "News": self.show_news,
                   "Weather": self.show_weather, "Pomodoro": self.show_pomodoro,
+                  "Notes": self.show_notes,
                   "System": self.show_system_monitor, "Stocks": self.show_stock_monitor,
                   "Organizer": self.show_file_organizer, "Discord": self.show_discord_integration,
                   "Notifications": self.show_notifications, "Glizzy": self.show_glizzy_module}
@@ -337,6 +345,11 @@ class ThunderzAssistant:
         self.clear_content()
         PomodoroModule(self.content_frame, self.colors)
         self.update_status("Pomodoro", "Focus with 25-minute work sessions")
+
+    def show_notes(self):
+        self.clear_content()
+        NotesModule(self.content_frame, self.colors)
+        self.update_status("Notes", "Quick notes with markdown support")
     
     def show_system_monitor(self):
         self.clear_content()
@@ -424,6 +437,7 @@ Navigation:
 • Ctrl+1: Dashboard
 • Ctrl+2: News
 • Ctrl+3: Weather
+• Ctrl+4: Notes
 
 Actions:
 • F5: Refresh current module
@@ -441,7 +455,7 @@ Window:
             messagebox.showinfo("Documentation", "Documentation folder not found.\n\nCheck the GitHub repository for docs.")
     
     def show_about(self):
-        about_text = """⚡ Thunderz Assistant v1.6.0
+        about_text = """⚡ Thunderz Assistant v1.7.0
 
 A modular productivity suite with:
 • Dashboard & Task Management

@@ -1,6 +1,72 @@
 {
-  "total_sessions": 0,
-  "completed_today": 0,
-  "last_session": null,
-  "daily_goal": 8
+  "version": 2,
+  "settings": {
+    "work_minutes": 25,
+    "short_break_minutes": 5,
+    "long_break_minutes": 15,
+    "daily_goal": 8,
+    "long_break_interval": 4
+  },
+  "days": {
+    "2026-02-10": {
+      "count": 3,
+      "goal": 8,
+      "sessions": [
+        {
+          "started_at": "2026-02-10T09:00:00",
+          "completed_at": "2026-02-10T09:25:00",
+          "duration_minutes": 25,
+          "task_label": "Write documentation"
+        },
+        {
+          "started_at": "2026-02-10T10:00:00",
+          "completed_at": "2026-02-10T10:25:00",
+          "duration_minutes": 25,
+          "task_label": "Code review"
+        },
+        {
+          "started_at": "2026-02-10T11:15:00",
+          "completed_at": "2026-02-10T11:40:00",
+          "duration_minutes": 25,
+          "task_label": "Implement feature"
+        }
+      ]
+    },
+    "2026-02-09": {
+      "count": 5,
+      "goal": 8,
+      "sessions": [
+        {
+          "started_at": "2026-02-09T09:00:00",
+          "completed_at": "2026-02-09T09:25:00",
+          "duration_minutes": 25,
+          "task_label": "Morning planning"
+        },
+        {
+          "started_at": "2026-02-09T09:35:00",
+          "completed_at": "2026-02-09T10:00:00",
+          "duration_minutes": 25,
+          "task_label": "Email responses"
+        },
+        {
+          "started_at": "2026-02-09T10:15:00",
+          "completed_at": "2026-02-09T10:40:00",
+          "duration_minutes": 25,
+          "task_label": "Development work"
+        },
+        {
+          "started_at": "2026-02-09T14:00:00",
+          "completed_at": "2026-02-09T14:25:00",
+          "duration_minutes": 25,
+          "task_label": "Bug fixes"
+        },
+        {
+          "started_at": "2026-02-09T15:00:00",
+          "completed_at": "2026-02-09T15:25:00",
+          "duration_minutes": 25,
+          "task_label": "Testing"
+        }
+      ]
+    }
+  }
 }

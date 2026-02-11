@@ -68,6 +68,13 @@ DISCORD_APP_ID = "YOUR_DISCORD_APP_ID_HERE"  # Replace with your Discord Applica
 # 3. Paste it below
 DISCORD_WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"  # Replace with your Discord Webhook URL
 
+# Pomodoro Timer Module (Enhanced v2.0)
+POMODORO_WORK_MINUTES = 25           # Duration of work sessions (default: 25 minutes)
+POMODORO_SHORT_BREAK_MINUTES = 5     # Duration of short breaks (default: 5 minutes)
+POMODORO_LONG_BREAK_MINUTES = 15     # Duration of long breaks (default: 15 minutes)
+POMODORO_DAILY_GOAL = 8              # Daily pomodoro goal (default: 8 pomodoros)
+POMODORO_LONG_BREAK_INTERVAL = 4     # Pomodoros before long break (default: 4)
+
 # Future module settings can be added here as you expand the application
 
 # Developer Mode

@@ -1,0 +1,37 @@
+{
+  "username": "Thunderz",
+  "widgets": [
+    {
+      "id": "weather",
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "id": "quote",
+      "enabled": true,
+      "order": 1
+    },
+    {
+      "id": "media",
+      "enabled": true,
+      "order": 2
+    },
+    {
+      "id": "pomodoro_stats",
+      "enabled": true,
+      "order": 3
+    },
+    {
+      "id": "tasks_summary",
+      "enabled": true,
+      "order": 4
+    },
+    {
+      "id": "notes_recent",
+      "enabled": true,
+      "order": 5
+    }
+  ],
+  "columns": 3,
+  "tasks_visible": true
+}

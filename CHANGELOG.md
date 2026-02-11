@@ -2,6 +2,43 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.10.0] - 2026-02-10
+
+### Added - Quick Notes Module
+- **Standalone Note-Taking System**:
+  - **Markdown Support**: Headers, lists, bold/italic text rendering
+  - **Organization**: Categorize notes (Work, Personal, Ideas) and pin important ones
+  - **Dual-Pane Interface**: Scrollable list on left, editor/preview on right
+  - **Search**: Real-time filtering by title, content, or category
+  - **Persistence**: Auto-saves to `data/notes.json`
+
+### Added - Configurable Dashboard
+- **Settings Interface**: New modal window (Gear icon) to configure the app
+- **Widget Management**:
+  - Toggle visibility of any widget
+  - Reorder widgets via config file
+  - New widgets added: **Recent Notes**, **Pomodoro Stats**, **Task Summary**
+- **Personalization**:
+  - Customizable username for greetings
+  - Settings persist to `data/dashboard_config.json`
+
+### Changed - Enhanced Pomodoro (v2)
+- **Customizable Timer**:
+  - Configure Work, Short Break, and Long Break durations
+  - Set daily session goals
+- **Statistics & Tracking**:
+  - New "View Stats" button with Bar Charts (Last 7/30 days)
+  - Visual progress bar for daily goals
+  - Task labeling: Track what you are working on during each session
+  - Data migration: Automatically upgrades old stats to v2 format
+
+### Changed - UI & UX
+- **Main Window**: Increased default size to **1200x850** to accommodate growing sidebar
+- **Sidebar**: Added "Notes" module button
+- **Shortcuts**: Added `Ctrl+4` to quickly open Notes
+
+---
+
 ## [1.7.0] - 2026-02-10
 
 ### Changed - Project Structure Reorganization
@@ -15,25 +52,52 @@ All notable changes to Thunderz Assistant will be documented in this file.
     - `stock_watchlist.json` → `data/stock_watchlist.json`
     - `pomodoro_stats.json` → `data/pomodoro_stats.json`
 
+- **Documentation Reorganization**: Complete restructure of docs directory
+  - Organized 37 documentation files into logical categories
+  - Created directory structure:
+    - `docs/setup/` - Installation & configuration guides (5 files)
+    - `docs/guides/` - Feature-specific guides (20 files in 5 subdirectories)
+      - `discord/` - Discord integration guides (8 files)
+      - `file-organizer/` - File organizer documentation (2 files)
+      - `stock-monitor/` - Stock monitoring guides (2 files)
+      - `notification-center/` - Notification system docs (2 files)
+      - `ui/` - UI and theming guides (3 files)
+    - `docs/versions/` - Version history and release notes (7 files)
+    - `docs/development/` - Developer documentation (3 files)
+    - `docs/planning/` - Future plans and roadmap (2 files)
+  - Renamed files for consistency (removed redundant prefixes)
+  - Completely rewrote `docs/README.md` with new structure
+  - Updated all documentation references in main `README.md`
+
 - **Benefits**:
   - ✅ Cleaner root directory structure
   - ✅ Clear separation between code and data
   - ✅ Easier backup/restore (just backup `data/` folder)
   - ✅ Simpler `.gitignore` (ignore entire directory vs individual files)
   - ✅ Example templates for new users in `data.example/`
-  - ✅ Scalable: easy to add more data files in the future
+  - ✅ Professional documentation structure (industry-standard organization)
+  - ✅ Easy navigation by category for documentation
+  - ✅ Scalable: easy to add more data files and documentation in the future
 
 - **Code Updates**:
-
-  - Updated all module file paths to reference `data/` directory
-  - Updated `.gitignore` with new data directory structure
-  - Updated `config.example.py` with new paths
+  - Updated 7 module files to reference `data/` directory:
+    - `config.example.py`
+    - `modules/dashboard_module.py`
+    - `modules/notification_manager.py`
+    - `modules/stock_monitor_module.py`
+    - `modules/pomodoro_module.py` (2 occurrences)
+    - `modules/discord_webhook_module.py` (2 occurrences)
+  - Updated `.gitignore` with comprehensive coverage (40+ new patterns)
+  - Moved `.venv/` inside project directory
+  - Separated test files from debug scripts (`tests/debug/`)
   - Added `pyproject.toml` for modern Python packaging
 
-- **Documentation**:
-  - Updated README.md with new project structure diagram
+- **Documentation Updates**:
+  - Updated main `README.md` with new project structure diagram
   - Added setup step for data directory initialization
-  - Updated all file path references in documentation
+  - Updated all file path references (10 documentation links corrected)
+  - Completely rewrote `docs/README.md` with categorized navigation
+  - Added quick-find tables and comprehensive index
 
 ### Added
 
