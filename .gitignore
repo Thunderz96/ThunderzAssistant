@@ -113,18 +113,20 @@ config.py
 config_local.py
 
 # User data directory (personal data - never commit!)
-data/                      # All personal user data files
+data/                      
 
 # BUT allow example templates
-!data.example/             # Example templates are safe to commit
+!data.example/             
 
 # Backups (local versions only)
 backups/
 
 # Debug & Test artifacts
-debug_*.py                 # Debug scripts
+# Debug scripts
+debug_*.py                 
 *_debug.py
-tests/debug/              # Debug subdirectory (keep structure, ignore contents)
+# Debug subdirectory (keep structure, ignore contents)
+tests/debug/              
 test_results.txt
 results.txt
 *_output.txt
@@ -135,7 +137,9 @@ clear_icon_cache.bat
 check_git.bat
 clear_icon_cache.bat
 install_discord_presence.bat
-*.bat                     # Temporary batch scripts (keep versioned .bat files with git add -f)
+
+# Temporary batch scripts (keep versioned .bat files with git add -f)
+*.bat                    
 
 # Documentation (local only)
 docs/GIT_CHEAT_SHEET.md
@@ -145,6 +149,4 @@ V1.6.0_UPDATE_SUMMARY.md
 # Media cache
 .icon_cache/
 media/cache/
-
-data/
 
