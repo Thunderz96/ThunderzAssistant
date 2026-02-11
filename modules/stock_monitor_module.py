@@ -18,7 +18,8 @@ Requires:
 - matplotlib (for data visualization)
 """
 import tkinter as tk
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox
+from tkinter import scrolledtext # Standard PyInstaller hook target
 import yfinance as yf
 import matplotlib.pyplot as plt
 import json

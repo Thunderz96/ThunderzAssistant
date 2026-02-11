@@ -66,6 +66,13 @@ dmypy.json
 .settings/
 *.sublime-project
 *.sublime-workspace
+*.pyc
+__pycache__/
+
+# PyInstaller Build Artifacts
+build/
+dist/
+*.spec
 
 # ===== OS FILES =====
 .DS_Store
@@ -112,14 +119,15 @@ logs/
 config.py
 config_local.py
 
-# User data directory (personal data - never commit!)
-data/                      
+# User data and backup directory (personal data - never commit!)
+data/   
+backups/                   
 
 # BUT allow example templates
 !data.example/             
 
-# Backups (local versions only)
-backups/
+# Build Bundles
+*.zip
 
 # Debug & Test artifacts
 # Debug scripts
@@ -131,6 +139,7 @@ test_results.txt
 results.txt
 *_output.txt
 clear_icon_cache.bat
+build_exe.py
 
 
 # Temporary scripts & helpers

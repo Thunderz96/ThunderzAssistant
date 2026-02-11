@@ -13,7 +13,8 @@ Features:
 
 import sys
 import os
-from PIL import Image, ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 import pystray
 from pystray import MenuItem as item
 import threading

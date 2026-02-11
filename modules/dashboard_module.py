@@ -8,6 +8,7 @@ import threading
 import requests
 import hashlib
 import psutil
+import sys
 
 # Optional imports for Media detection
 try:
@@ -216,7 +217,6 @@ class MediaWidget(DashboardWidget):
             self.lbl_artist.config(text=artist)
         except:
             pass
-
 class PomodoroStatsWidget(DashboardWidget):
     ID = "pomodoro_stats"
     TITLE = "🍅 Focus Stats"
@@ -249,7 +249,6 @@ class PomodoroStatsWidget(DashboardWidget):
         
         tk.Label(self.content_frame, text=bar, font=("Consolas", 10), 
                 bg=self.colors['card_bg'], fg=self.colors['success']).pack(anchor="w", pady=5)
-
 class TasksSummaryWidget(DashboardWidget):
     ID = "tasks_summary"
     TITLE = "✅ Pending Tasks"
@@ -269,7 +268,6 @@ class TasksSummaryWidget(DashboardWidget):
                 font=("Segoe UI", 24, "bold"), bg=self.colors['card_bg'], fg="white").pack(side=tk.LEFT)
         tk.Label(self.content_frame, text="tasks remaining", 
                 font=("Segoe UI", 10), bg=self.colors['card_bg'], fg=self.colors['text_dim']).pack(side=tk.LEFT, padx=10)
-
 class RecentNotesWidget(DashboardWidget):
     ID = "notes_recent"
     TITLE = "📝 Recent Notes"
@@ -293,10 +291,19 @@ class RecentNotesWidget(DashboardWidget):
                 tk.Label(self.content_frame, text="No notes found", bg=self.colors['card_bg'], fg=self.colors['text_dim']).pack()
         except:
             tk.Label(self.content_frame, text="Error loading notes", bg=self.colors['card_bg'], fg=self.colors['danger']).pack()
-
-
 class DashboardModule:
     def __init__(self, parent_frame, colors):
+
+        if getattr(sys, 'frozen', False):
+            # Running as an EXE: look in the folder where the EXE is
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            # Running as a script: look in the project root
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        self.config_file = os.path.join(base_dir, "data", "dashboard_config.json")
+
+
         self.parent = parent_frame
         self.colors = colors
         self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -337,11 +344,16 @@ class DashboardModule:
         return default_conf
 
     def save_config(self):
+        """Saves the current configuration to the JSON file."""
         try:
-            with open(self.config_path, 'w') as f:
-                json.dump(self.config, f, indent=2)
-        except:
-            pass
+            # Ensure the data directory exists in the EXE's folder
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            
+            with open(self.config_file, 'w') as f:
+                json.dump(self.config, f, indent=4)
+            print(f"✅ Configuration saved to {self.config_file}")
+        except Exception as e:
+            print(f"❌ Failed to save config: {e}")
 
     def load_tasks(self):
         try:
@@ -628,20 +640,26 @@ class DashboardModule:
             cb.pack(side=tk.RIGHT)
 
     def save_settings(self, window):
-        # Save Username
+        """Saves dashboard settings and refreshes the UI"""
+        # 1. Capture Username
         new_name = self.name_entry.get().strip()
         self.config['username'] = new_name if new_name else "User"
 
-        # Save Widgets
-        if self.check_vars: # Safety check
-            for w in self.config['widgets']:
+        # 2. Capture Widget States
+        if hasattr(self, 'check_vars'):
+            for w in self.config.get('widgets', []):
                 if w['id'] in self.check_vars:
                     w['enabled'] = self.check_vars[w['id']].get()
-        
+
+        # 3. Persistent Save
         self.save_config()
+        
+        # 4. Close Window
         window.destroy()
         
-        # Refresh UI
+        # 5. Refresh Parent UI
         for widget in self.parent.winfo_children():
             widget.destroy()
+        
+        # Re-run initialization to reflect changes immediately
         self.__init__(self.parent, self.colors)

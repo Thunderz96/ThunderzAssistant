@@ -1,6 +1,6 @@
 """
 Thunderz Assistant - Enhanced UI Version
-Version: 1.7.0
+Version: 1.10.0
 
 This is a modernized version with:
 - Menu bar (File, View, Help)
@@ -14,11 +14,24 @@ To test: python main_enhanced.py
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, Menu
+from tkinter import ttk
+from tkinter import messagebox
+from tkinter import Menu
 import sys
 import os
 import webbrowser
 import config
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 
 # Add modules directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
@@ -38,7 +51,6 @@ from discord_presence_module import set_instance
 from notification_center_module import NotificationCenterModule
 from notification_manager import get_unread_count, register_observer
 from tray_manager import TrayManager
-
 
 class ToolTip:
     """Tooltip class for showing help text on hover"""
@@ -72,7 +84,7 @@ class ToolTip:
 class ThunderzAssistant:
     def __init__(self, root):
         self.root = root
-        self.root.title("⚡ Thunderz Assistant v1.7.0")
+        self.root.title("⚡ Thunderz Assistant v1.10.0")
         
         # INCREASED SIZE: 1200x850 to fit all modules
         self.root.geometry("1200x850")
@@ -248,7 +260,7 @@ class ThunderzAssistant:
                                         fg=self.colors['text_dim'])
         self.status_tip_label.pack(side=tk.LEFT, expand=True)
         
-        tk.Label(self.status_bar, text="v1.7.0", font=("Segoe UI", 9),
+        tk.Label(self.status_bar, text="v1.10.0", font=("Segoe UI", 9),
                 bg=self.colors['secondary'], fg=self.colors['text_dim'],
                 anchor="e", padx=10).pack(side=tk.RIGHT)
     
@@ -455,7 +467,7 @@ Window:
             messagebox.showinfo("Documentation", "Documentation folder not found.\n\nCheck the GitHub repository for docs.")
     
     def show_about(self):
-        about_text = """⚡ Thunderz Assistant v1.7.0
+        about_text = """⚡ Thunderz Assistant v1.10.0
 
 A modular productivity suite with:
 • Dashboard & Task Management

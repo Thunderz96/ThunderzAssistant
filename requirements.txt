@@ -34,6 +34,12 @@ pypresence>=4.3.0  # Discord Rich Presence integration
 pystray>=0.19.5  # System tray icon with menu
 # Note: Pillow already included above for video playback
 
+# yfinance helper (ensures data parsing works on fresh installs)
+lxml>=4.9.0
+
+# Build Tools
+pyinstaller>=6.0.0 # For building standalone executables
+
 # ===== FUTURE / COMMENTED OUT =====
 
 # Spotify API Integration (future enhancement - currently using local detection)
