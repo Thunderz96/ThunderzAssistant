@@ -2,6 +2,10 @@
 
 A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, note-taking, and workflow optimization!
 
+
+<img width="1202" height="882" alt="Dashboard_Module" src="https://github.com/user-attachments/assets/96749e81-67e8-4b93-815c-34db69f7dc20" />
+
+
 ---
 
 ## 🎯 Current Version: **1.10.0**
