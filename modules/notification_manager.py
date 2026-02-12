@@ -32,6 +32,10 @@ class NotificationManager:
                     cls._instance._initialized = False
         return cls._instance
     
+    ICON = "🔔"
+    PRIORITY = 2  
+
+
     def __init__(self):
         if self._initialized:
             return

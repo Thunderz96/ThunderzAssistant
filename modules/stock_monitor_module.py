@@ -34,6 +34,8 @@ class StockMonitorModule:
     
     Track stocks over time without fetching manually every time!
     """
+    ICON = "📈"
+    PRIORITY = 4  
 
     def __init__(self, parent_frame, colors):
         """

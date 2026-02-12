@@ -22,6 +22,9 @@ class GlizzyModule:
     """
     Glizzy module for Thunderz Assistant.
     """
+    ICON = "🌭"
+    PRIORITY = 90  
+
 
     def __init__(self, parent_frame, colors):
         """

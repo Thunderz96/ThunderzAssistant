@@ -25,6 +25,8 @@ class TemplateModule:
     This class demonstrates the basic structure needed for any module.
     All modules should follow this pattern for consistency.
     """
+    ICON = "🛠️"
+    PRIORITY = 99  # Default priority (lower numbers show higher in sidebar)
     
     def __init__(self, parent_frame, colors):
         """

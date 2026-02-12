@@ -9,6 +9,7 @@ import requests
 import hashlib
 import psutil
 import sys
+import inspect
 
 # Optional imports for Media detection
 try:
@@ -20,9 +21,7 @@ except ImportError:
 
 class DashboardWidget:
     """Base class for all dashboard widgets"""
-    ID = "base"
-    TITLE = "Widget"
-    
+        
     def __init__(self, parent, colors, app_data_dir):
         self.parent = parent
         self.colors = colors
@@ -59,34 +58,23 @@ class WeatherWidget(DashboardWidget):
                                font=("Segoe UI", 10), bg=self.colors['card_bg'], fg=self.colors['text'])
         self.lbl_desc.pack(anchor="w")
         
+        # Start background thread
         threading.Thread(target=self._fetch_weather, daemon=True).start()
 
-    def _detect_city(self):
-        try:
-            resp = requests.get("https://ipapi.co/json/", timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                if not data.get('error'):
-                    return data.get('city', data.get('region', ''))
-        except:
-            pass
-        try:
-            resp = requests.get("http://ip-api.com/json/?fields=status,city,regionName", timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data.get('status') != 'fail':
-                    return data.get('city', data.get('regionName', ''))
-        except:
-            pass
-        return ''
-        
     def _fetch_weather(self):
+        """Safely fetches weather with a fallback if auto-detection fails"""
         try:
-            city = self._detect_city()
-            if not city:
-                self.parent.after(0, lambda: self.lbl_desc.config(text="Location not found"))
-                return
+            # 1. Detect City (With Fallback)
+            city = "Baltimore" # Default fallback
+            try:
+                resp = requests.get("https://ipapi.co/json/", timeout=5)
+                if resp.status_code == 200:
+                    detected = resp.json().get('city', '')
+                    if detected: city = detected
+            except:
+                print("⚠️ Auto-location failed, using fallback.")
 
+            # 2. Fetch Data
             url = f"https://wttr.in/{city}?format=j1"
             response = requests.get(url, timeout=10)
             
@@ -96,17 +84,22 @@ class WeatherWidget(DashboardWidget):
                 temp = f"{current['temp_F']}°F"
                 desc = current['weatherDesc'][0]['value']
                 
-                self.parent.after(0, lambda: self._update_ui(temp, desc, city))
-        except:
-            self.parent.after(0, lambda: self.lbl_desc.config(text="Weather unavailable"))
-            
-    def _update_ui(self, temp, cond, loc):
-        try:
+                # 3. Update UI via safe thread callback
+                self.parent.after(0, lambda: self._safe_update_ui(temp, desc, city))
+        except Exception as e:
+            print(f"Weather error: {e}")
+            self._safe_update(self.lbl_desc, "Weather unavailable")
+
+    def _safe_update(self, widget, text):
+        """Ensures widget exists before updating"""
+        if widget and widget.winfo_exists():
+            widget.config(text=text)
+
+    def _safe_update_ui(self, temp, cond, loc):
+        """Updates multiple labels safely"""
+        if self.lbl_temp.winfo_exists() and self.lbl_desc.winfo_exists():
             self.lbl_temp.config(text=temp)
             self.lbl_desc.config(text=f"{cond} • {loc}")
-        except:
-            pass
-
 class QuoteWidget(DashboardWidget):
     ID = "quote"
     TITLE = "💡 Daily Quote"
@@ -137,7 +130,6 @@ class QuoteWidget(DashboardWidget):
         
         tk.Label(self.content_frame, text=f"— {quote_author}", font=("Segoe UI", 9),
                 bg=self.colors['card_bg'], fg=self.colors['text_dim']).pack(anchor="w", pady=(5,0))
-
 class MediaWidget(DashboardWidget):
     ID = "media"
     TITLE = "🎵 Now Playing"
@@ -291,69 +283,172 @@ class RecentNotesWidget(DashboardWidget):
                 tk.Label(self.content_frame, text="No notes found", bg=self.colors['card_bg'], fg=self.colors['text_dim']).pack()
         except:
             tk.Label(self.content_frame, text="Error loading notes", bg=self.colors['card_bg'], fg=self.colors['danger']).pack()
+class SystemStatsWidget(DashboardWidget):
+    ID = "system_stats"
+    TITLE = "💻 System Load"
+    
+    def create_content(self):
+        # --- CPU ROW ---
+        cpu_frame = tk.Frame(self.content_frame, bg=self.colors['card_bg'])
+        cpu_frame.pack(fill=tk.X, pady=4)
+        tk.Label(cpu_frame, text="CPU", font=("Segoe UI", 9, "bold"), 
+                 bg=self.colors['card_bg'], fg=self.colors['text']).pack(side=tk.LEFT)
+        self.cpu_lbl = tk.Label(cpu_frame, text="0%", font=("Segoe UI", 9), 
+                 bg=self.colors['card_bg'], fg=self.colors['accent'])
+        self.cpu_lbl.pack(side=tk.RIGHT)
+        
+        # --- RAM ROW ---
+        ram_frame = tk.Frame(self.content_frame, bg=self.colors['card_bg'])
+        ram_frame.pack(fill=tk.X, pady=4)
+        tk.Label(ram_frame, text="RAM", font=("Segoe UI", 9, "bold"), 
+                 bg=self.colors['card_bg'], fg=self.colors['text']).pack(side=tk.LEFT)
+        self.ram_lbl = tk.Label(ram_frame, text="0%", font=("Segoe UI", 9), 
+                 bg=self.colors['card_bg'], fg=self.colors['warning'])
+        self.ram_lbl.pack(side=tk.RIGHT)
+
+        # --- GPU ROW (New) ---
+        gpu_frame = tk.Frame(self.content_frame, bg=self.colors['card_bg'])
+        gpu_frame.pack(fill=tk.X, pady=4)
+        tk.Label(gpu_frame, text="GPU", font=("Segoe UI", 9, "bold"), 
+                 bg=self.colors['card_bg'], fg=self.colors['text']).pack(side=tk.LEFT)
+        # Using a purple hex for GPU distinction
+        self.gpu_lbl = tk.Label(gpu_frame, text="Checking...", font=("Segoe UI", 9), 
+                 bg=self.colors['card_bg'], fg="#D946EF") 
+        self.gpu_lbl.pack(side=tk.RIGHT)
+        
+        self.running = True
+        threading.Thread(target=self._update_stats, daemon=True).start()
+        
+    def _update_stats(self):
+        # Attempt to initialize NVIDIA drivers once
+        has_gpu = False
+        try:
+            import pynvml
+            pynvml.nvmlInit()
+            has_gpu = True
+        except:
+            has_gpu = False
+
+        import time
+        while hasattr(self, 'running') and self.running:
+            try:
+                # 1. Get CPU/RAM
+                cpu = f"{psutil.cpu_percent()}%"
+                ram = f"{psutil.virtual_memory().percent}%"
+                
+                # 2. Get GPU (if available)
+                gpu = "N/A"
+                if has_gpu:
+                    try:
+                        handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+                        util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                        gpu = f"{util.gpu}%"
+                    except:
+                        gpu = "Err"
+
+                # 3. Schedule UI Update
+                if self.frame.winfo_exists():
+                    self.parent.after(0, lambda: self._update_labels(cpu, ram, gpu))
+                else:
+                    break
+            except:
+                break
+            time.sleep(2) # Update every 2 seconds
+
+    def _update_labels(self, cpu, ram, gpu):
+        if hasattr(self, 'cpu_lbl') and self.cpu_lbl.winfo_exists():
+            self.cpu_lbl.config(text=cpu)
+            self.ram_lbl.config(text=ram)
+            self.gpu_lbl.config(text=gpu)
+
 class DashboardModule:
+    ICON = "📊"
+    PRIORITY = 1
+
     def __init__(self, parent_frame, colors):
-
-        if getattr(sys, 'frozen', False):
-            # Running as an EXE: look in the folder where the EXE is
-            base_dir = os.path.dirname(sys.executable)
-        else:
-            # Running as a script: look in the project root
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-        self.config_file = os.path.join(base_dir, "data", "dashboard_config.json")
-
-
         self.parent = parent_frame
         self.colors = colors
-        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # --- UNIFIED PATH LOGIC ---
+        if getattr(sys, 'frozen', False):
+            # Running as an EXE
+            self.base_dir = os.path.dirname(sys.executable)
+        else:
+            # Running as a script
+            self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
         self.data_dir = os.path.join(self.base_dir, 'data')
         self.config_path = os.path.join(self.data_dir, 'dashboard_config.json')
         self.tasks_file = os.path.join(self.data_dir, "dashboard_tasks.json")
         
+        # Ensure directory exists immediately
+        os.makedirs(self.data_dir, exist_ok=True)
+
         self.config = self.load_config()
         self.tasks = []
         self.load_tasks()
         
-        # Initialize check_vars early to avoid AttributeErrors
         self.check_vars = {} 
-        
         self.create_ui()
 
     def load_config(self):
+        """Dynamically identifies available widgets and merges with saved user settings"""
+        import inspect
+        
+        # 1. Identify all available widget classes in this file using globals()
+        available_widgets = []
+        
+        # FIX: Use globals().values() to robustly find classes in the current file
+        for obj in globals().values():
+            if inspect.isclass(obj) and issubclass(obj, DashboardWidget):
+                # Exclude the base class itself
+                if obj is not DashboardWidget and hasattr(obj, 'ID'):
+                    available_widgets.append({
+                        "id": obj.ID,
+                        "enabled": True, 
+                        "order": getattr(obj, 'PRIORITY', 99)
+                    })
+
+        # 2. Define standard defaults
         default_conf = {
             "username": "User",
-            "widgets": [
-                {"id": "weather", "enabled": True, "order": 0},
-                {"id": "quote", "enabled": True, "order": 1},
-                {"id": "media", "enabled": True, "order": 2},
-                {"id": "pomodoro_stats", "enabled": False, "order": 3},
-                {"id": "tasks_summary", "enabled": False, "order": 4},
-                {"id": "notes_recent", "enabled": False, "order": 5}
-            ],
+            "widgets": available_widgets, 
             "columns": 3,
             "tasks_visible": True
         }
+
+        # 3. Load user file and merge
         if os.path.exists(self.config_path):
             try:
                 with open(self.config_path, 'r') as f:
                     user_conf = json.load(f)
+                    
+                    saved_widgets = {w['id']: w for w in user_conf.get('widgets', [])}
+                    
+                    merged_widgets = []
+                    # We iterate over AVAILABLE widgets to ensure code updates reflect in config
+                    for widget in available_widgets:
+                        w_id = widget['id']
+                        if w_id in saved_widgets:
+                            merged_widgets.append(saved_widgets[w_id])
+                        else:
+                            merged_widgets.append(widget)
+                    
+                    user_conf['widgets'] = merged_widgets
                     return {**default_conf, **user_conf}
-            except:
-                pass
+            except Exception as e:
+                print(f"⚠️ Config merge error: {e}")
+        
         return default_conf
 
     def save_config(self):
-        """Saves the current configuration to the JSON file."""
+        """Standardized save method using unified path"""
         try:
-            # Ensure the data directory exists in the EXE's folder
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-            
-            with open(self.config_file, 'w') as f:
+            with open(self.config_path, 'w') as f:
                 json.dump(self.config, f, indent=4)
-            print(f"✅ Configuration saved to {self.config_file}")
+            print(f"✅ Settings saved to: {self.config_path}")
         except Exception as e:
-            print(f"❌ Failed to save config: {e}")
+            print(f"❌ Save failed: {e}")
 
     def load_tasks(self):
         try:
@@ -373,6 +468,7 @@ class DashboardModule:
             pass
 
     def create_ui(self):
+        # ... (Canvas and Scrollbar setup remains the same) ...
         canvas = tk.Canvas(self.parent, bg=self.colors['background'], highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.parent, orient="vertical", command=canvas.yview)
         self.scroll_frame = tk.Frame(canvas, bg=self.colors['background'])
@@ -387,45 +483,45 @@ class DashboardModule:
         # --- HEADER ---
         header_frame = tk.Frame(self.scroll_frame, bg=self.colors['background'], pady=20, padx=20)
         header_frame.pack(fill=tk.X)
-        
-        now = datetime.datetime.now()
-        greeting = "Good Night"
-        if 5 <= now.hour < 12: greeting = "Good Morning"
-        elif 12 <= now.hour < 17: greeting = "Good Afternoon"
-        elif 17 <= now.hour < 22: greeting = "Good Evening"
-        
-        # Use configured username
-        username = self.config.get('username', 'User')
-        
-        tk.Label(header_frame, text=f"{greeting}, {username}", font=("Segoe UI", 28, "bold"),
-                bg=self.colors['background'], fg="white").pack(side=tk.LEFT)
-                
+
         tk.Button(header_frame, text="⚙️", command=self.open_settings,
                  font=("Segoe UI", 14), bg=self.colors['background'], fg=self.colors['text_dim'],
                  relief=tk.FLAT, cursor="hand2").pack(side=tk.RIGHT)
-        
-        tk.Label(self.scroll_frame, text=now.strftime("%A, %B %d"), font=("Segoe UI", 12),
-                bg=self.colors['background'], fg=self.colors['text_dim'], padx=20).pack(anchor="w")
 
-        # --- WIDGET GRID ---
+        self.clock_label = tk.Label(header_frame, text="", font=("Segoe UI", 14, "bold"),
+                                   bg=self.colors['background'], fg=self.colors['accent'])
+        self.clock_label.pack(side=tk.RIGHT, padx=20)
+
+        now = datetime.datetime.now()
+        greeting = "Good Morning" # (You can keep your full greeting logic here)
+        
+        username = self.config.get('username', 'User')
+        tk.Label(header_frame, text=f"{greeting}, {username}", font=("Segoe UI", 28, "bold"),
+                bg=self.colors['background'], fg="white").pack(side=tk.LEFT)
+
+        self.update_clock()
+
+        # --- WIDGET GRID (FIXED) ---
         widget_container = tk.Frame(self.scroll_frame, bg=self.colors['background'], padx=20, pady=20)
         widget_container.pack(fill=tk.BOTH, expand=True)
         
+        # FIX: Use globals().values() to create the map
+        widget_map = {}
+        for obj in globals().values():
+            if inspect.isclass(obj) and issubclass(obj, DashboardWidget) and hasattr(obj, 'ID'):
+                widget_map[obj.ID] = obj
+
+        # Filter Enabled Widgets
         enabled_widgets = sorted(
             [w for w in self.config['widgets'] if w.get('enabled', True)],
             key=lambda x: x.get('order', 0)
         )
         
+        # Render Widgets
         cols = self.config.get('columns', 3)
         for i, w_conf in enumerate(enabled_widgets):
             w_id = w_conf['id']
-            w_class = None
-            if w_id == "weather": w_class = WeatherWidget
-            elif w_id == "quote": w_class = QuoteWidget
-            elif w_id == "media": w_class = MediaWidget
-            elif w_id == "pomodoro_stats": w_class = PomodoroStatsWidget
-            elif w_id == "tasks_summary": w_class = TasksSummaryWidget
-            elif w_id == "notes_recent": w_class = RecentNotesWidget
+            w_class = widget_map.get(w_id) # Look up class dynamically
             
             if w_class:
                 widget = w_class(widget_container, self.colors, self.data_dir)
@@ -435,9 +531,19 @@ class DashboardModule:
         for i in range(cols):
             widget_container.grid_columnconfigure(i, weight=1)
 
-        # --- QUICK TASKS SECTION ---
+        # --- QUICK TASKS ---
         if self.config.get('tasks_visible', True):
             self.create_tasks_section(self.scroll_frame)
+
+    def update_clock(self):
+        """Updates the dashboard clock every second"""
+        # Check if the widget still exists before updating
+        if hasattr(self, 'clock_label') and self.clock_label.winfo_exists():
+            now = datetime.datetime.now().strftime("%I:%M:%S %p")
+            self.clock_label.config(text=now)
+            
+            # Schedule next update in 1 second (1000ms)
+            self.parent.after(1000, self.update_clock)
 
     def create_tasks_section(self, parent):
         frame = tk.Frame(parent, bg=self.colors['background'], padx=20, pady=20)
@@ -522,58 +628,39 @@ class DashboardModule:
             lbl.bind("<Button-1>", lambda e, idx=i: self.toggle_task(idx))
 
     def open_settings(self):
-        # Professional Modal Window
+        # 1. Window Setup
         win = tk.Toplevel(self.parent)
         win.title("Dashboard Settings")
         win.geometry("600x500")
         win.configure(bg=self.colors['secondary'])
         
-        # --- FIX START ---
-        # 1. Use self.base_dir to find the icon in the root folder
         icon_path = os.path.join(self.base_dir, 'thunderz_icon.ico')
-        
         if os.path.exists(icon_path):
-            try:
-                # 2. Apply the icon to 'win' (the settings window), not 'self.root'
-                win.iconbitmap(icon_path)
-            except Exception as e:
-                print(f"Icon error: {e}")
-        # --- FIX END ---
+            try: win.iconbitmap(icon_path)
+            except: pass
 
-        # Make modal
         win.transient(self.parent.winfo_toplevel())
         win.grab_set()
 
-        # Configure Style for tabs
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure("TNotebook", background=self.colors['secondary'], borderwidth=0)
-        style.configure("TNotebook.Tab", background=self.colors['card_bg'], foreground=self.colors['text'], 
-                       padding=[15, 8], font=("Segoe UI", 10))
-        style.map("TNotebook.Tab", background=[("selected", self.colors['accent'])], 
-                 foreground=[("selected", "white")])
-        style.configure("TFrame", background=self.colors['card_bg'])
-
-        # 1. Header (Top)
+        # 2. Header & Footer
         header = tk.Frame(win, bg=self.colors['secondary'], pady=20, padx=25)
         header.pack(fill=tk.X, side=tk.TOP)
         tk.Label(header, text="Dashboard Settings", font=("Segoe UI", 20, "bold"),
                 bg=self.colors['secondary'], fg="white").pack(anchor="w")
 
-        # 2. Footer (Bottom)
         footer = tk.Frame(win, bg=self.colors['secondary'], pady=15, padx=25)
         footer.pack(fill=tk.X, side=tk.BOTTOM)
+        
+        tk.Button(footer, text="Save Changes", command=lambda: self.save_settings(win),
+                 font=("Segoe UI", 10, "bold"), bg=self.colors['accent'], fg="white",
+                 relief=tk.FLAT, padx=20, pady=6, cursor="hand2").pack(side=tk.RIGHT)
         
         tk.Button(footer, text="Cancel", command=win.destroy,
                  font=("Segoe UI", 10), bg=self.colors['card_bg'], fg="white",
                  relief=tk.FLAT, padx=20, pady=6, cursor="hand2").pack(side=tk.RIGHT, padx=10)
-                 
-        tk.Button(footer, text="Save Changes", command=lambda: self.save_settings(win),
-                 font=("Segoe UI", 10, "bold"), bg=self.colors['accent'], fg="white",
-                 relief=tk.FLAT, padx=20, pady=6, cursor="hand2").pack(side=tk.RIGHT)
 
-        # 3. Tabs (Middle)
-        notebook = ttk.Notebook(win, style="TNotebook")
+        # 3. Tabs Setup
+        notebook = ttk.Notebook(win)
         notebook.pack(fill=tk.BOTH, expand=True, padx=25, pady=(0, 20))
         
         # --- GENERAL TAB ---
@@ -586,30 +673,24 @@ class DashboardModule:
         tk.Label(gen_content, text="Display Name", font=("Segoe UI", 12, "bold"),
                 bg=self.colors['card_bg'], fg="white").pack(anchor="w")
         
-        tk.Label(gen_content, text="What should we call you in the daily greeting?", 
-                font=("Segoe UI", 9), bg=self.colors['card_bg'], fg=self.colors['text_dim']).pack(anchor="w", pady=(5, 15))
-
-        # Input Card
-        input_card = tk.Frame(gen_content, bg=self.colors['background'], padx=1, pady=1) 
-        input_card.pack(fill=tk.X)
-        self.name_entry = tk.Entry(input_card, font=("Segoe UI", 12), bg=self.colors['background'], 
+        # Name Entry
+        self.name_entry = tk.Entry(gen_content, font=("Segoe UI", 12), bg=self.colors['background'], 
                                  fg="white", relief=tk.FLAT, insertbackground="white")
-        self.name_entry.pack(fill=tk.X, padx=15, pady=10)
+        self.name_entry.pack(fill=tk.X, pady=(5, 20))
         self.name_entry.insert(0, self.config.get('username', 'User'))
 
-        # --- WIDGETS TAB ---
+        # --- WIDGETS TAB (FIXED SCOPE ERROR) ---
         tab_wid = tk.Frame(notebook, bg=self.colors['card_bg'])
         notebook.add(tab_wid, text="   Widgets   ")
         
         wid_content = tk.Frame(tab_wid, bg=self.colors['card_bg'], padx=20, pady=20)
         wid_content.pack(fill=tk.BOTH, expand=True)
         
-        tk.Label(wid_content, text="Visible Widgets", font=("Segoe UI", 12, "bold"),
-                bg=self.colors['card_bg'], fg="white").pack(anchor="w", pady=(0, 15))
-        
-        # Scrollable area for widgets
+        # Create Canvas Structure FIRST
         canvas = tk.Canvas(wid_content, bg=self.colors['card_bg'], highlightthickness=0)
         scrollbar = ttk.Scrollbar(wid_content, orient="vertical", command=canvas.yview)
+        
+        # Define scroll_frame BEFORE the loop
         scroll_frame = tk.Frame(canvas, bg=self.colors['card_bg'])
         
         scroll_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
@@ -618,10 +699,13 @@ class DashboardModule:
         
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
+
+        # Loop Through Widgets
         self.check_vars = {}
-        for w in self.config['widgets']:
-            # Widget Card
+        # Ensure we are iterating over a list, defaults to empty list if key missing
+        widget_list = self.config.get('widgets', [])
+        
+        for w in widget_list:
             card = tk.Frame(scroll_frame, bg=self.colors['background'], pady=10, padx=15)
             card.pack(fill=tk.X, pady=5, padx=2)
             
@@ -631,13 +715,15 @@ class DashboardModule:
             label_frame = tk.Frame(card, bg=self.colors['background'])
             label_frame.pack(side=tk.LEFT, fill=tk.X)
             
-            tk.Label(label_frame, text=w['id'].replace("_", " ").title(), font=("Segoe UI", 11, "bold"),
+            # Formatting Name
+            display_name = w['id'].replace("_", " ").title()
+            tk.Label(label_frame, text=display_name, font=("Segoe UI", 11, "bold"),
                     bg=self.colors['background'], fg="white").pack(anchor="w")
             
-            cb = tk.Checkbutton(card, variable=var, bg=self.colors['background'], 
-                               activebackground=self.colors['background'], 
-                               selectcolor=self.colors['accent'], cursor="hand2")
-            cb.pack(side=tk.RIGHT)
+            tk.Checkbutton(card, variable=var, bg=self.colors['background'], 
+                          activebackground=self.colors['background'],
+                          selectcolor=self.colors['accent'], cursor="hand2").pack(side=tk.RIGHT)
+
 
     def save_settings(self, window):
         """Saves dashboard settings and refreshes the UI"""

@@ -36,7 +36,9 @@ class PomodoroModule:
     - CSV export
     - Settings panel
     """
-    
+    ICON = "🍅"
+    PRIORITY = 8
+
     def __init__(self, parent_frame, colors):
         """
         Initialize the Enhanced Pomodoro timer module.
@@ -44,7 +46,8 @@ class PomodoroModule:
         Args:
             parent_frame: The tkinter frame where this module will be displayed
             colors: Dictionary containing the application's color scheme
-        """
+        """      
+
         self.parent = parent_frame
         self.colors = colors
         

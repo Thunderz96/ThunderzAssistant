@@ -121,7 +121,8 @@ config_local.py
 
 # User data and backup directory (personal data - never commit!)
 data/   
-backups/                   
+backups/         
+internal_modules/          
 
 # BUT allow example templates
 !data.example/             

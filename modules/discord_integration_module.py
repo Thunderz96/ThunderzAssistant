@@ -20,6 +20,8 @@ class DiscordIntegrationModule:
     Tab 1: Rich Presence - Show your activity on Discord profile
     Tab 2: Webhooks - Send messages to Discord channels
     """
+    ICON = "🎮"
+    PRIORITY = 5  # Show after Weather and Stock modules
     
     def __init__(self, parent, colors):
         """

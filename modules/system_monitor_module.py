@@ -35,6 +35,8 @@ class SystemMonitorModule:
     - GPU stats (if NVIDIA GPU present)
     - Auto-refreshes every 2 seconds
     """
+    ICON = "💻"
+    PRIORITY = 9
     
     def __init__(self, parent_frame, colors):
         """

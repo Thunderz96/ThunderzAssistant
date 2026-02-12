@@ -21,6 +21,8 @@ class WeatherModule:
     This class creates the UI for checking weather and handles fetching
     weather data from the wttr.in service. It can auto-detect your location!
     """
+    ICON = "🌤️"
+    PRIORITY = 3
 
     def __init__(self, parent_frame, colors):
         self.parent = parent_frame

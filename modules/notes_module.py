@@ -8,6 +8,9 @@ import re
 from datetime import datetime
 
 class NotesModule:
+    ICON = "🗒️"
+    PRIORITY = 7
+
     def __init__(self, parent_frame, colors):
         self.parent = parent_frame
         self.colors = colors

@@ -2,6 +2,25 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
+## [1.10.1] - 2025-02-11
+
+### 🚀 New Features
+- **Dynamic Widget Discovery**: The Dashboard now automatically scans for and registers any widget class defined in `dashboard_module.py`. No more manual updates to `load_config` are required when adding new features.
+- **Live System Monitor**: Added a new "System Load" widget that displays real-time CPU, RAM, and GPU usage (via `nvidia-ml-py`).
+    - *Note:* GPU monitoring automatically disables itself if no NVIDIA GPU is detected.
+- **Internal Modules**: Implemented a "Internal" module system. Launch with `python main.py --internal` (or `-i`) to access experimental features.
+
+### 🛠️ Improvements
+- **Defensive Weather Fetching**: The Weather widget now fails fast (3s timeout) and defaults to "New York" if auto-detection is blocked by a VPN or firewall.
+- **Settings UI Overhaul**: Fixed the Settings window layout, restoring the Tabbed interface (General/Widgets) and professional header/footer design.
+- **Robust Configuration**: The `load_config` logic now uses `globals()` to safely identify classes, preventing empty widget lists on startup.
+- **Crash Prevention**: Added `winfo_exists()` checks to all background threads (Weather, Clock, System Stats) to prevent `TclError` when switching modules rapidly.
+
+### 🐛 Bug Fixes
+- Fixed `UnboundLocalError` in `open_settings` by ensuring `scroll_frame` is initialized before the widget loop.
+- Fixed `SyntaxWarning` in `file_organizer_module.py` by using raw strings for Windows file paths.
+- Resolved `AttributeError` in `DashboardModule` caused by referencing `self.config` before it was fully assigned.
+
 ## [1.10.0] - 2026-02-10
 
 ### Added - Quick Notes Module

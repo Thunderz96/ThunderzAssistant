@@ -183,7 +183,9 @@ ThunderzAssistant/
 │   ├── file_organizer_module.py
 │   ├── weather_module.py
 │   └── ...
-│
+├── internal_modules/ 
+|
+|
 └── docs/                        # 📚 Documentation
     ├── QUICKSTART.md
     ├── DEVELOPER_GUIDE.md

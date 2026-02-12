@@ -34,7 +34,9 @@ class FileOrganizerModule:
     3. User clicks "Organize" to move files into category folders
     4. Module tracks moves so you can undo if needed
     """
-    
+    ICON = "📁"
+    PRIORITY = 6
+
     def __init__(self, parent, colors):
         self.parent = parent
         
@@ -291,7 +293,7 @@ class FileOrganizerModule:
         message.pack()
     
     def is_folder_safe(self, folder_path):
-        """
+        r"""
         Check if a folder is safe to organize.
         
         Returns:

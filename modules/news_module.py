@@ -17,6 +17,8 @@ class NewsModule:
     """
     A class to fetch and process breaking news from a real API, and display it in a Tkinter frame.
     """
+    ICON = "📰"
+    PRIORITY = 6
     
     def __init__(self, api_key, content_frame, colors):
         """

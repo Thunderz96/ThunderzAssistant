@@ -21,6 +21,8 @@ import sys
 import os
 import webbrowser
 import config
+import importlib.util
+import inspect
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -114,11 +116,12 @@ class ThunderzAssistant:
         
         # Initialize system tray (before UI so it can reference widgets)
         self.tray_manager = None
-        
+        self.module_buttons = {}
         self.create_menu_bar()
         self.create_ui()
         self.create_status_bar()
         self.show_dashboard()
+        
         
         # Initialize system tray icon
         try:
@@ -129,6 +132,52 @@ class ThunderzAssistant:
             print(f"System tray not available: {e}")
             # Fall back to normal close behavior
             self.root.protocol("WM_DELETE_WINDOW", self.root.quit)
+
+    def discover_modules(self):
+        """
+        Scans 'modules' and 'internal_modules' for valid classes.
+        Returns a list of instantiated module objects.
+        """
+        discovered = []
+        # Scan both public and private directories
+        module_dirs = [os.path.join(os.path.dirname(__file__), 'modules')]
+        if any(flag in sys.argv for flag in ["--internal", "-i"]):
+            module_dirs.append(os.path.join(os.path.dirname(__file__), 'internal_modules'))
+        
+
+        for m_dir in module_dirs:
+            if not os.path.exists(m_dir):
+                continue
+
+            for filename in os.listdir(m_dir):
+                # Only look for .py files, ignore __init__ and templates
+                if filename.endswith(".py") and filename not in ["__init__.py", "template_module.py"]:
+                    module_name = filename[:-3]
+                    file_path = os.path.join(m_dir, filename)
+
+                    try:
+                        # 1. Load the file as a module
+                        spec = importlib.util.spec_from_file_location(module_name, file_path)
+                        gen_module = importlib.util.module_from_spec(spec)
+                        spec.loader.exec_module(gen_module)
+
+                        # 2. Find the class inside 
+                        for name, obj in inspect.getmembers(gen_module):
+                            # Only add classes that are intended to be UI modules
+                            if inspect.isclass(obj) and name.endswith("Module"):
+                               # FILTER: Only include if it has an ICON defined
+                                if hasattr(obj, "ICON"):
+                                    discovered.append({
+                                    "class": obj,
+                                    "name": name.replace("Module", ""),
+                                    "icon": obj.ICON,
+                                    "priority": getattr(obj, "PRIORITY", 99)
+                            })
+                    except Exception as e:
+                        print(f"⚠️ Could not load {filename}: {e}")
+        
+        discovered.sort(key=lambda x: x['priority'])
+        return discovered
     
     def on_window_close(self):
         """
@@ -185,36 +234,65 @@ class ThunderzAssistant:
         tk.Label(sidebar_header, text="⚡ Modules", font=("Segoe UI", 16, "bold"),
                 bg=self.colors['primary'], fg="white", pady=15).pack()
         
-        modules = [
-            ("📊", "Dashboard", "Overview of your day", self.show_dashboard),
-            ("🔔", "Notifications", "View all notifications", self.show_notifications),
-            ("📰", "News", "Latest breaking news", self.show_news),
-            ("🌤️", "Weather", "Current weather conditions", self.show_weather),
-            ("🍅", "Pomodoro", "Focus timer for productivity", self.show_pomodoro),
-            ("📝", "Notes", "Quick notes with markdown", self.show_notes),
-            ("💻", "System", "Monitor system resources", self.show_system_monitor),
-            ("📈", "Stocks", "Track stock market prices", self.show_stock_monitor),
-            ("📁", "Organizer", "Clean up messy folders", self.show_file_organizer),
-            ("🎮", "Discord", "Discord presence & messages", self.show_discord_integration),
-            ("🌭", "Glizzy", "Roll the dice for fun!", self.show_glizzy_module),
-        ]
         
-        self.module_buttons = {}
-        self.notification_badge = None
-        for icon, name, tooltip, command in modules:
-            # Create button frame to hold button + badge
+        all_discovered = self.discover_modules()
+
+        for mod_data in all_discovered:
+            name = mod_data["name"]
+            icon = mod_data["icon"]
+
             btn_container = tk.Frame(sidebar, bg=self.colors['secondary'])
             btn_container.pack(fill=tk.X, padx=10, pady=3)
-            
-            btn = tk.Button(btn_container, text=f"{icon}  {name}", font=("Segoe UI", 11),
-                          bg=self.colors['card_bg'], fg=self.colors['text'],
-                          activebackground=self.colors['button_hover'], activeforeground="white",
-                          relief=tk.FLAT, cursor="hand2",
-                          command=lambda n=name, c=command: self.switch_module(n, c),
-                          anchor="w", padx=15, pady=10)
+
+            # We pass the class itself to the switch_module function
+            btn = tk.Button(
+                btn_container, 
+                text=f"{icon}  {name}", 
+                font=("Segoe UI", 11),
+                bg=self.colors['card_bg'], 
+                fg=self.colors['text'],
+                relief=tk.FLAT, 
+                cursor="hand2",
+                command=lambda m=mod_data: self.switch_module(m["name"], m["class"]),
+                anchor="w", 
+                padx=15, 
+                pady=10
+            )
             btn.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            ToolTip(btn, tooltip)
             self.module_buttons[name] = btn
+        
+        
+        
+        #modules = [
+        #    ("📊", "Dashboard", "Overview of your day", self.show_dashboard),
+        #    ("🔔", "Notifications", "View all notifications", self.show_notifications),
+        #    ("📰", "News", "Latest breaking news", self.show_news),
+        #    ("🌤️", "Weather", "Current weather conditions", self.show_weather),
+        #    ("🍅", "Pomodoro", "Focus timer for productivity", self.show_pomodoro),
+        #    ("📝", "Notes", "Quick notes with markdown", self.show_notes),
+        #    ("💻", "System", "Monitor system resources", self.show_system_monitor),
+        #    ("📈", "Stocks", "Track stock market prices", self.show_stock_monitor),
+        #    ("📁", "Organizer", "Clean up messy folders", self.show_file_organizer),
+        #    ("🎮", "Discord", "Discord presence & messages", self.show_discord_integration),
+        #    ("🌭", "Glizzy", "Roll the dice for fun!", self.show_glizzy_module),
+        #]
+        
+  #      self.module_buttons = {}
+  #      self.notification_badge = None
+  #      for icon, name, tooltip, command in modules:
+  #          # Create button frame to hold button + badge
+  #          btn_container = tk.Frame(sidebar, bg=self.colors['secondary'])
+  #          btn_container.pack(fill=tk.X, padx=10, pady=3)
+  #          
+  #          btn = tk.Button(btn_container, text=f"{icon}  {name}", font=("Segoe UI", 11),
+  #                        bg=self.colors['card_bg'], fg=self.colors['text'],
+  #                        activebackground=self.colors['button_hover'], activeforeground="white",
+  #                        relief=tk.FLAT, cursor="hand2",
+  #                        command=lambda n=name, c=command: self.switch_module(n, c),
+  #                        anchor="w", padx=15, pady=10)
+  #          btn.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+  #          ToolTip(btn, tooltip)
+  #          self.module_buttons[name] = btn
             
             # Add badge for Notifications module
             if name == "Notifications":
@@ -269,18 +347,26 @@ class ThunderzAssistant:
         if tip:
             self.status_tip_label.config(text=f"💡 {tip}")
     
-    def switch_module(self, name, command):
+    def switch_module(self, name, module_class):
+        """Instantiates the module class with required arguments and displays it"""
         self.current_module = name
+        
+        # UI Button Highlighting
         for btn_name, btn in self.module_buttons.items():
             if btn_name == name:
                 btn.config(bg=self.colors['accent'], fg="white")
             else:
                 btn.config(bg=self.colors['card_bg'], fg=self.colors['text'])
-        self.update_status(name)
-        command()
         
-        # Update Discord presence automatically
-        self.update_discord_presence(name)
+        self.update_status(name)
+        self.clear_content() # Clear old module content first
+                
+        try:
+            # Most modules expect (parent_frame, colors)
+            module_class(self.content_frame, self.colors)
+            self.update_discord_presence(name)
+        except Exception as e:
+            messagebox.showerror("Module Error", f"Failed to load {name}: {e}")
     
     def update_discord_presence(self, module_name):
         """Update Discord Rich Presence when switching modules"""
