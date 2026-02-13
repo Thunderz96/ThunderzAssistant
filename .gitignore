@@ -123,6 +123,7 @@ config_local.py
 data/   
 backups/         
 internal_modules/          
+docs/internal/
 
 # BUT allow example templates
 !data.example/             

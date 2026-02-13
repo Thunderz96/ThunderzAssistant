@@ -1,191 +1,118 @@
 """
-Template Module for Thunderz Assistant
-Version: 1.0.0
-
-This is a template file showing how to create a new module for the application.
-Copy this file and modify it to create your own features!
+Template Module for Thunderz Assistant (v1.10+)
+-----------------------------------------------
+This template demonstrates how to create a "Drop-in" module that is 
+automatically discovered by the main application.
 
 STEPS TO CREATE A NEW MODULE:
-1. Copy this file and rename it (e.g., calculator_module.py)
-2. Rename the class (e.g., CalculatorModule)
-3. Modify the create_ui() method to design your interface
-4. Add your functionality methods
-5. Import your module in main.py
-6. Add a button in the sidebar to access your module
+1. Copy this file to the 'modules/' folder (or 'internal_modules/' for private).
+2. Rename the class (e.g., class CryptoModule).
+3. Set your ICON and PRIORITY.
+4. Restart the app. It will appear automatically!
 """
 
 import tkinter as tk
-from tkinter import messagebox
-
+from tkinter import ttk, messagebox
+import threading
+import sys
+import os
 
 class TemplateModule:
-    """
-    Template module for Thunderz Assistant.
-    
-    This class demonstrates the basic structure needed for any module.
-    All modules should follow this pattern for consistency.
-    """
-    ICON = "🛠️"
-    PRIORITY = 99  # Default priority (lower numbers show higher in sidebar)
+    # --- DISCOVERY METADATA ---
+    # These two variables tell main.py to load this class.
+    ICON = "🛠️"       # Emoji icon for the sidebar
+    PRIORITY = 50     # Order in sidebar (1=Top, 100=Bottom)
     
     def __init__(self, parent_frame, colors):
         """
-        Initialize the module.
-        
-        Args:
-            parent_frame: The tkinter frame where this module will be displayed
-                         (This is the content area passed from main.py)
-            colors: Dictionary containing the application's color scheme
-                   (This keeps your module matching the app's theme)
+        Standard constructor required by the plugin system.
         """
         self.parent = parent_frame
         self.colors = colors
         
-        # Store any data or state your module needs here
-        self.data = None
+        # --- UNIFIED PATH LOGIC ---
+        # Ensures your module can find its assets whether running as code or EXE
+        if getattr(sys, 'frozen', False):
+            self.base_dir = os.path.dirname(sys.executable)
+        else:
+            self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+        self.data_dir = os.path.join(self.base_dir, 'data')
         
-        # Create the user interface
+        # Create the UI
         self.create_ui()
         
     def create_ui(self):
         """
-        Create the user interface for this module.
-        
-        This method sets up all the visual elements (labels, buttons, entry fields, etc.)
-        that the user will interact with.
-        
-        TIP: Break this into smaller methods if your UI becomes complex!
+        Builds the interface. 
+        Uses the 'colors' dictionary to match the app theme.
         """
-        # Title for your module
-        title_label = tk.Label(
-            self.parent,
-            text="Your Module Name Here",
-            font=("Arial", 18, "bold"),
-            bg="white",
-            fg=self.colors['primary']
-        )
-        title_label.pack(pady=20)
+        # 1. Header Section
+        header = tk.Frame(self.parent, bg=self.colors['secondary'], pady=20, padx=20)
+        header.pack(fill=tk.X)
         
-        # Description or instructions
-        info_label = tk.Label(
-            self.parent,
-            text="Describe what your module does here",
-            font=("Arial", 12),
-            bg="white",
-            fg=self.colors['text']
-        )
-        info_label.pack(pady=10)
+        tk.Label(header, text="New Module Title", font=("Segoe UI", 20, "bold"),
+                bg=self.colors['secondary'], fg="white").pack(anchor="w")
         
-        # Input frame (if you need user input)
-        input_frame = tk.Frame(self.parent, bg="white")
-        input_frame.pack(pady=20)
+        tk.Label(header, text="Description of what this tool does.", font=("Segoe UI", 10),
+                bg=self.colors['secondary'], fg=self.colors['text_dim']).pack(anchor="w")
+
+        # 2. Content Area
+        content = tk.Frame(self.parent, bg=self.colors['background'], padx=20, pady=20)
+        content.pack(fill=tk.BOTH, expand=True)
         
-        # Example: Text entry field
-        self.input_entry = tk.Entry(
-            input_frame,
-            font=("Arial", 12),
-            width=30
-        )
-        self.input_entry.pack(side=tk.LEFT, padx=5)
+        # Example: Input Card
+        card = tk.Frame(content, bg=self.colors['card_bg'], padx=20, pady=20)
+        card.pack(fill=tk.X, pady=10)
         
-        # Example: Action button
-        action_button = tk.Button(
-            input_frame,
-            text="Do Something",
-            font=("Arial", 12),
-            bg=self.colors['secondary'],
-            fg="white",
-            command=self.perform_action,  # This calls your method when clicked
-            padx=20,
-            pady=5
-        )
-        action_button.pack(side=tk.LEFT, padx=5)
+        tk.Label(card, text="Input Section", font=("Segoe UI", 12, "bold"),
+                bg=self.colors['card_bg'], fg="white").pack(anchor="w", pady=(0, 10))
         
-        # Results frame (where output is displayed)
-        self.results_frame = tk.Frame(self.parent, bg="white")
-        self.results_frame.pack(pady=20, fill=tk.BOTH, expand=True)
+        self.entry = tk.Entry(card, font=("Segoe UI", 11), width=40)
+        self.entry.pack(side=tk.LEFT, padx=(0, 10))
         
-    def perform_action(self):
+        btn = tk.Button(card, text="Run Action", command=self.run_background_task,
+                       bg=self.colors['accent'], fg="white", font=("Segoe UI", 10),
+                       relief=tk.FLAT, padx=15, cursor="hand2")
+        btn.pack(side=tk.LEFT)
+        
+        # Example: Results Area
+        self.lbl_result = tk.Label(content, text="Ready", font=("Segoe UI", 11),
+                                  bg=self.colors['background'], fg=self.colors['text'])
+        self.lbl_result.pack(pady=20)
+
+    def run_background_task(self):
         """
-        This method is called when the user clicks the action button.
-        
-        Add your main functionality here!
-        
-        COMMON PATTERNS:
-        - Get input from entry fields
-        - Process/calculate something
-        - Display results
-        - Handle errors with try/except
+        Example of how to run code without freezing the UI.
         """
-        # Example: Get input
-        user_input = self.input_entry.get().strip()
-        
-        # Example: Validate input
+        user_input = self.entry.get()
         if not user_input:
-            messagebox.showwarning("Input Required", "Please enter something!")
+            messagebox.showwarning("Input", "Please enter something first.")
             return
-        
-        # Example: Do something with the input
-        try:
-            # Your logic here
-            result = f"You entered: {user_input}"
-            
-            # Display result
-            self.display_result(result)
-            
-        except Exception as e:
-            # Handle errors gracefully
-            messagebox.showerror("Error", f"An error occurred: {str(e)}")
-    
-    def display_result(self, result):
-        """
-        Display results to the user.
-        
-        Args:
-            result: The data/text to display
-        """
-        # Clear previous results
-        self.clear_results()
-        
-        # Show new result
-        result_label = tk.Label(
-            self.results_frame,
-            text=result,
-            font=("Arial", 14),
-            bg="white",
-            fg=self.colors['text']
-        )
-        result_label.pack(pady=20)
-    
-    def clear_results(self):
-        """
-        Clear all widgets from the results display area.
-        
-        This is useful before showing new results to avoid clutter.
-        """
-        for widget in self.results_frame.winfo_children():
-            widget.destroy()
 
+        self.lbl_result.config(text="Processing...", fg=self.colors['warning'])
+        
+        # Launch thread
+        threading.Thread(target=self._worker, args=(user_input,), daemon=True).start()
 
-# HOW TO ADD THIS MODULE TO THE MAIN APP:
-# 
-# 1. In main.py, add this import at the top:
-#    from your_module_name import YourClassName
-#
-# 2. In the create_ui() method of ThunderzAssistant class, add a button:
-#    your_module_btn = tk.Button(
-#        sidebar,
-#        text="🔧  Your Module",
-#        font=("Arial", 12),
-#        bg=self.colors['accent'],
-#        fg="white",
-#        command=self.show_your_module
-#    )
-#    your_module_btn.pack(fill=tk.X, padx=10, pady=5)
-#
-# 3. Add a method to display your module:
-#    def show_your_module(self):
-#        self.clear_content()
-#        your_module = YourClassName(self.content_frame, self.colors)
-#
-# That's it! Your module is now integrated into the app!
+    def _worker(self, input_data):
+        """
+        Background worker. 
+        CRITICAL: Never update UI directly here. Use _safe_update.
+        """
+        import time
+        # Simulate work
+        time.sleep(2)
+        
+        result_text = f"Processed: {input_data.upper()}"
+        
+        # Update UI safely on the main thread
+        self.parent.after(0, lambda: self._safe_update(result_text))
+
+    def _safe_update(self, text):
+        """
+        Updates UI elements ONLY if they still exist.
+        Prevents crashes if user switches modules while task is running.
+        """
+        if hasattr(self, 'lbl_result') and self.lbl_result.winfo_exists():
+            self.lbl_result.config(text=text, fg=self.colors['success'])
