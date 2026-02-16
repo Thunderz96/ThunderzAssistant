@@ -361,6 +361,69 @@ class SystemStatsWidget(DashboardWidget):
             self.ram_lbl.config(text=ram)
             self.gpu_lbl.config(text=gpu)
 
+class CryptoWidget(DashboardWidget):
+    ID = "crypto"
+    TITLE = "₿ Crypto"
+
+    # Tickers and display names
+    COINS = [("BTC-USD", "₿ BTC"), ("ETH-USD", "Ξ ETH"), ("SOL-USD", "◎ SOL")]
+
+    def create_content(self):
+        self.rows = {}
+        for ticker, label in self.COINS:
+            row = tk.Frame(self.content_frame, bg=self.colors['card_bg'])
+            row.pack(fill=tk.X, pady=2)
+            tk.Label(row, text=label, font=("Segoe UI", 10, "bold"),
+                     bg=self.colors['card_bg'], fg=self.colors['text'], width=8, anchor="w").pack(side=tk.LEFT)
+            price_lbl = tk.Label(row, text="…", font=("Segoe UI", 10),
+                                 bg=self.colors['card_bg'], fg=self.colors['text'], anchor="w")
+            price_lbl.pack(side=tk.LEFT, padx=4)
+            chg_lbl = tk.Label(row, text="", font=("Segoe UI", 9),
+                               bg=self.colors['card_bg'], fg=self.colors['text_dim'], anchor="e")
+            chg_lbl.pack(side=tk.RIGHT)
+            self.rows[ticker] = (price_lbl, chg_lbl)
+
+        self._running = True
+        threading.Thread(target=self._fetch_loop, daemon=True).start()
+
+    def _fetch_loop(self):
+        while self._running:
+            try:
+                import yfinance as yf
+                for ticker, _ in self.COINS:
+                    hist = yf.Ticker(ticker).history(period='2d')
+                    if hist.empty:
+                        continue
+                    price = hist['Close'].iloc[-1]
+                    if len(hist) > 1:
+                        prev = hist['Close'].iloc[-2]
+                        chg_pct = (price - prev) / prev * 100
+                    else:
+                        chg_pct = 0.0
+                    color = self.colors['success'] if chg_pct >= 0 else self.colors['danger']
+                    sign = "+" if chg_pct >= 0 else ""
+                    price_lbl, chg_lbl = self.rows[ticker]
+
+                    def _update(pl=price_lbl, cl=chg_lbl, p=price, c=chg_pct, s=sign, col=color):
+                        try:
+                            if pl.winfo_exists():
+                                pl.config(text=f"${p:,.2f}")
+                                cl.config(text=f"{s}{c:.2f}%", fg=col)
+                        except Exception:
+                            pass
+                    self.frame.after(0, _update)
+            except Exception:
+                pass
+            # Refresh every 60 seconds; check _running every second to allow clean exit
+            for _ in range(60):
+                if not self._running:
+                    return
+                time.sleep(1)
+
+    def get_frame(self):
+        self._running = False  # signal thread to stop when widget is destroyed
+        return super().get_frame() if False else self.frame
+
 class DashboardModule:
     ICON = "📊"
     PRIORITY = 1

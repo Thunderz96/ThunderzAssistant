@@ -2,20 +2,41 @@
 
 A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, note-taking, and workflow optimization!
 
-
-<img width="1202" height="882" alt="Dashboard_Module" src="https://github.com/user-attachments/assets/96749e81-67e8-4b93-815c-34db69f7dc20" />
-
+![Version](https://img.shields.io/badge/version-1.12.4-blue?style=flat-square)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square&logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square&logo=windows)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 ---
 
-## 🎯 Current Version: **1.10.0**
+## 🎯 Current Version: **1.12.4**
 
-### 🎨 What's New?
-- **📝 Quick Notes**: Full markdown note-taking system with categories and search.
-- **⚙️ Configurable Dashboard**: Toggle, reorder, and customize widgets via settings.
-- **🍅 Pomodoro v2**: Custom timer durations, task labeling, and visual stats charts.
-- **📊 New Widgets**: Recent Notes and Focus Stats added to the dashboard.
-- **🛡️ Secure Data**: Clean separation of user data (`data/`) from app templates.
+### 🎨 What's New in v1.12.4?
+- **🔍 Command Palette (Ctrl+K)**: Instantly search modules, notes, and stocks.
+- **🎨 Theming System**: Switch between Dark Blue, OLED Black, and Slate themes.
+- **🔔 Stock Price Alerts**: Get notified when a watched stock hits your target.
+- **📤 Notes Export**: Export notes as `.md`, `.txt`, or a `.zip` archive.
+- **⚡ Focus Mode (F11)**: Distraction-free borderless fullscreen.
+- **🔎 Sidebar Search**: Live filter sidebar modules by name.
+- **📋 Clipboard Manager**: Persistent 50-item clipboard history module.
+- **₿ Crypto Widget**: Live BTC/ETH/SOL prices on the Dashboard.
+- **📅 Pomodoro Heatmap**: GitHub-style yearly contribution heatmap.
+
+---
+
+## 📸 Screenshots
+
+| Dashboard | Stock Monitor |
+|-----------|--------------|
+| ![Dashboard](Screenshots/Dashboard_Module.png) | ![Stock Monitor](Screenshots/Stock_Module.png) |
+
+| System Monitor | Pomodoro |
+|----------------|----------|
+| ![System Monitor](Screenshots/System_Mon_Module.png) | ![Pomodoro](Screenshots/Pomodoro_Module.png) |
+
+| Weather | Discord Rich Presence |
+|---------|-----------------------|
+| ![Weather](Screenshots/Weather_Module.png) | ![Discord](Screenshots/Rich_Presence.png) |
 
 ---
 
@@ -29,7 +50,14 @@ Maximize efficiency with these global hotkeys:
 | **Ctrl+2** | Jump to News |
 | **Ctrl+3** | Jump to Weather |
 | **Ctrl+4** | Jump to Notes |
+| **Ctrl+5** | Jump to module 5 |
+| **Ctrl+6** | Jump to module 6 |
+| **Ctrl+7** | Jump to module 7 |
+| **Ctrl+8** | Jump to module 8 |
+| **Ctrl+9** | Jump to module 9 |
+| **Ctrl+K** | Open command palette (search modules, notes, stocks) |
 | **F5** | Refresh current module |
+| **F11** | Toggle Focus Mode (hide sidebar) |
 | **Ctrl+Q** | Quit application |
 
 💡 **Tip:** Hover over any sidebar button for helpful tooltips!
@@ -279,15 +307,15 @@ The app features a sleek **dark blue theme**:
 
 ## 🛠️ Adding Your Own Modules
 
-Want to add features? It's designed to be modular!
+Want to add features? It's designed to be modular — no changes to `main.py` needed!
 
 **Quick Guide:**
 1. Create `modules/your_module.py`
 2. Follow the template in `modules/template_module.py`
-3. Import in `main.py`
-4. Add sidebar button
+3. Give your class an `ICON` and `PRIORITY` attribute
+4. The app auto-discovers it on next launch ✨
 
-**Detailed Guide:** See [docs/development/DEVELOPER_GUIDE.md](docs/development/DEVELOPER_GUIDE.md)
+**Detailed Guide:** See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/DEVELOPER_GUIDE.md](docs/development/DEVELOPER_GUIDE.md)
 
 ---
 

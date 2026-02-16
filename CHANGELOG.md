@@ -2,7 +2,58 @@
 
 All notable changes to Thunderz Assistant will be documented in this file.
 
-## [1.10.1] - 2025-02-11
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [1.12.4] - 2026-02-15
+
+### Added
+- **Ctrl+K Command Palette**: Instant search across modules, notes, and stock tickers.
+- **Theming System**: Switch between Dark Blue, OLED Black, and Slate themes; choice persists to `data/settings.json`.
+- **Sidebar Search**: Live filter box in sidebar to quickly find modules by name.
+- **Focus Mode (F11)**: Hides sidebar and menu bar for distraction-free use; floating exit button to restore.
+- **Stock Price Alerts**: Set Above/Below/% change thresholds per ticker; fires a Notification Center alert when triggered.
+- **Notes Export**: Export current note as `.md` or `.txt`, or export all notes as a `.zip` archive.
+- **File Organizer — Dry Run Preview**: Scrollable checkbox table shows every file and its destination before moving; only selected files are organised.
+- **Clipboard Manager Module**: New `📋` module; monitors clipboard every 500ms; stores last 50 text entries with search and click-to-copy.
+- **Dashboard Crypto Widget**: New `₿ Crypto` widget displaying live BTC, ETH, and SOL prices with colour-coded % change.
+- **Pomodoro Year Heatmap**: GitHub-style 52-week contribution heatmap in the Stats window with hover tooltips.
+- **Internal module improvements** (requires `--internal` flag; details in private notes).
+
+### Fixed
+- **Error Boundary**: Module load failures now show a friendly error card instead of a blank/silent crash.
+- **Version sync**: `pyproject.toml`, `config.example.py`, `README.md`, and `CHANGELOG.md` all updated to `1.12.4`.
+
+### Changed
+- Status bar and window title now read from a single `APP_VERSION` constant.
+- `setup.bat` added for one-click first-time setup (venv, pip, config copy, data dir).
+- GitHub Actions lint workflow added (flake8 + black check on push).
+
+---
+
+## [1.11.0] - 2026-02-12
+
+### Added
+- **Internal module improvements** (requires `--internal` flag; details in private notes).
+
+### Fixed
+- Internal module rendering and data-path bugs (requires `--internal` flag; details in private notes).
+
+---
+
+## [1.10.2] - 2026-02-11
+
+### Changed
+- Internal Modules system refined: `--internal` / `-i` flag support stabilised.
+- Module buttons for internal modules display in red (`#FF5252`) in sidebar.
+
+### Fixed
+- `winfo_exists()` guards added to all background threads to prevent `TclError` on rapid module switching.
+
+---
+
+## [1.10.1] - 2026-02-11
 
 ### 🚀 New Features
 - **Dynamic Widget Discovery**: The Dashboard now automatically scans for and registers any widget class defined in `dashboard_module.py`. No more manual updates to `load_config` are required when adding new features.

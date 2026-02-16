@@ -792,7 +792,25 @@ class PomodoroModule:
         period_frame.pack(pady=10)
         
         period_var = tk.StringVar(value="7")
-        
+
+        # matplotlib figure (shared between bar chart and heatmap)
+        fig = Figure(figsize=(10, 5), facecolor=self.colors['content_bg'])
+        ax = fig.add_subplot(111, facecolor=self.colors['card_bg'])
+        canvas = FigureCanvasTkAgg(fig, master=stats_window)
+
+        # heatmap tk canvas (shown instead of matplotlib for year view)
+        heat_frame = tk.Frame(stats_window, bg=self.colors['content_bg'])
+
+        def show_bar(days):
+            heat_frame.pack_forget()
+            canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+            self.update_stats_chart(fig, ax, canvas, days)
+
+        def show_heatmap():
+            canvas.get_tk_widget().pack_forget()
+            heat_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+            self.draw_heatmap(heat_frame)
+
         tk.Radiobutton(
             period_frame,
             text="Last 7 Days",
@@ -803,9 +821,9 @@ class PomodoroModule:
             fg=self.colors['text'],
             selectcolor=self.colors['card_bg'],
             activebackground=self.colors['content_bg'],
-            command=lambda: self.update_stats_chart(fig, ax, canvas, period_var.get())
+            command=lambda: show_bar("7")
         ).pack(side=tk.LEFT, padx=10)
-        
+
         tk.Radiobutton(
             period_frame,
             text="Last 30 Days",
@@ -816,18 +834,24 @@ class PomodoroModule:
             fg=self.colors['text'],
             selectcolor=self.colors['card_bg'],
             activebackground=self.colors['content_bg'],
-            command=lambda: self.update_stats_chart(fig, ax, canvas, period_var.get())
+            command=lambda: show_bar("30")
         ).pack(side=tk.LEFT, padx=10)
-        
-        # Create matplotlib figure
-        fig = Figure(figsize=(10, 5), facecolor=self.colors['content_bg'])
-        ax = fig.add_subplot(111, facecolor=self.colors['card_bg'])
-        
-        # Create canvas
-        canvas = FigureCanvasTkAgg(fig, master=stats_window)
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        
+
+        tk.Radiobutton(
+            period_frame,
+            text="📅 Year View",
+            variable=period_var,
+            value="year",
+            font=("Segoe UI", 10),
+            bg=self.colors['content_bg'],
+            fg=self.colors['text'],
+            selectcolor=self.colors['card_bg'],
+            activebackground=self.colors['content_bg'],
+            command=show_heatmap
+        ).pack(side=tk.LEFT, padx=10)
+
         # Initial chart
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
         self.update_stats_chart(fig, ax, canvas, "7")
         
         # Export button
@@ -894,6 +918,130 @@ class PomodoroModule:
         fig.tight_layout()
         canvas.draw()
     
+    def draw_heatmap(self, parent_frame):
+        """Draw a GitHub-style contribution heatmap for the past 52 weeks."""
+        import datetime as dt
+
+        # Clear previous heatmap widgets
+        for w in parent_frame.winfo_children():
+            try: w.destroy()
+            except: pass
+
+        today = date.today()
+        # Start from Monday 52 weeks ago
+        start = today - dt.timedelta(weeks=52)
+        # Walk back to the previous Monday
+        start -= dt.timedelta(days=start.weekday())
+
+        CELL = 12   # px per cell
+        GAP = 2     # gap between cells
+        COLS = 53   # weeks
+        ROWS = 7    # days per week (Mon=0 … Sun=6)
+        LEFT_PAD = 28
+        TOP_PAD = 20
+        MONTH_H = 16
+
+        canvas_w = LEFT_PAD + COLS * (CELL + GAP) + 10
+        canvas_h = MONTH_H + TOP_PAD + ROWS * (CELL + GAP) + 40
+
+        cv = tk.Canvas(parent_frame, bg=self.colors['content_bg'],
+                       highlightthickness=0, width=canvas_w, height=canvas_h)
+        cv.pack(pady=8)
+
+        # Title
+        cv.create_text(canvas_w // 2, 10, text="Yearly Contribution Heatmap",
+                       font=("Segoe UI", 11, "bold"), fill=self.colors['text'], anchor="n")
+
+        # Day-of-week labels
+        day_names = ["M", "", "W", "", "F", "", "S"]
+        for r, name in enumerate(day_names):
+            y = MONTH_H + TOP_PAD + r * (CELL + GAP) + CELL // 2
+            cv.create_text(LEFT_PAD - 6, y, text=name,
+                           font=("Segoe UI", 8), fill=self.colors['text_dim'], anchor="e")
+
+        # Colour scale: 0 → background, 1 → dim accent, 2-3 → accent, 4+ → bright
+        bg = self.colors['background']
+        accent = self.colors['accent']
+        bright = self.colors['success']
+        dim = self.colors.get('card_bg', '#334155')
+
+        def cell_color(count):
+            if count == 0:   return dim
+            if count == 1:   return accent + "88"   # semi-transparent via hex may not work in tk
+            if count <= 3:   return accent
+            return bright
+
+        # Build data lookup
+        day_data = self.stats.get('days', {})
+
+        # Track months for labels
+        last_month = None
+        tooltip_items = []
+
+        current = start
+        for col in range(COLS):
+            for row in range(ROWS):
+                d = current + dt.timedelta(days=row)
+                if d > today:
+                    current += dt.timedelta(weeks=1)
+                    break
+                count = day_data.get(d.isoformat(), {}).get('count', 0)
+                color = cell_color(count)
+
+                x1 = LEFT_PAD + col * (CELL + GAP)
+                y1 = MONTH_H + TOP_PAD + row * (CELL + GAP)
+                x2, y2 = x1 + CELL, y1 + CELL
+
+                rect_id = cv.create_rectangle(x1, y1, x2, y2, fill=color, outline="", tags="cell")
+
+                # Tooltip on hover
+                tip_text = f"{d.strftime('%a %b %d')} — {count} session{'s' if count != 1 else ''}"
+                tooltip_items.append((rect_id, tip_text))
+
+                # Month label at top of first row
+                if row == 0 and d.month != last_month:
+                    last_month = d.month
+                    cv.create_text(x1, MONTH_H + TOP_PAD - 4,
+                                   text=d.strftime("%b"), font=("Segoe UI", 8),
+                                   fill=self.colors['text_dim'], anchor="sw")
+
+            current += dt.timedelta(weeks=1)
+
+        # Tooltip implementation
+        tip_win = [None]
+
+        def _show_tip(event, text):
+            if tip_win[0]:
+                try: tip_win[0].destroy()
+                except: pass
+            tw = tk.Toplevel(cv)
+            tw.wm_overrideredirect(True)
+            tw.wm_geometry(f"+{event.x_root + 12}+{event.y_root + 12}")
+            tk.Label(tw, text=text, font=("Segoe UI", 9),
+                     bg="#1E293B", fg="#E2E8F0", padx=6, pady=3, relief="solid", bd=1).pack()
+            tip_win[0] = tw
+
+        def _hide_tip(event):
+            if tip_win[0]:
+                try: tip_win[0].destroy()
+                except: pass
+            tip_win[0] = None
+
+        for rect_id, tip_text in tooltip_items:
+            cv.tag_bind(rect_id, "<Enter>", lambda e, t=tip_text: _show_tip(e, t))
+            cv.tag_bind(rect_id, "<Leave>", _hide_tip)
+
+        # Legend
+        legend_y = MONTH_H + TOP_PAD + ROWS * (CELL + GAP) + 8
+        cv.create_text(LEFT_PAD, legend_y, text="Less", font=("Segoe UI", 8),
+                       fill=self.colors['text_dim'], anchor="w")
+        for i, col in enumerate([dim, accent, bright]):
+            lx = LEFT_PAD + 32 + i * (CELL + GAP)
+            cv.create_rectangle(lx, legend_y - 1, lx + CELL, legend_y + CELL - 1,
+                                fill=col, outline="")
+        cv.create_text(LEFT_PAD + 32 + 3 * (CELL + GAP) + 4, legend_y, text="More",
+                       font=("Segoe UI", 8), fill=self.colors['text_dim'], anchor="w")
+
     def export_csv(self):
         """Export session history to CSV."""
         filename = filedialog.asksaveasfilename(

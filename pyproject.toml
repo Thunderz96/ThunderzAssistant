@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thunderz-assistant"
-version = "1.6.0"
+version = "1.12.4"
 description = "A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, and workflow optimization!"
 readme = "README.md"
 requires-python = ">=3.9"

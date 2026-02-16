@@ -55,9 +55,17 @@ class StockMonitorModule:
             "data",
             "stock_watchlist.json"
         )
-        
-        # Load saved watchlist
+        # Alerts storage  {ticker: [{type, threshold, triggered, created_at}, ...]}
+        self.alerts_file = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "data",
+            "stock_alerts.json"
+        )
+        self.alerts = {}
+
+        # Load saved watchlist and alerts
         self.load_watchlist()
+        self.load_alerts()
         
         # Create the user interface
         self.create_ui()
@@ -206,8 +214,12 @@ class StockMonitorModule:
         self.status_label.pack(pady=10)
     
     def _on_mousewheel(self, event):
-        """Handle mousewheel scrolling"""
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        try:
+            # Check if canvas still exists before scrolling
+            if self.canvas.winfo_exists():
+                self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        except Exception:
+            pass # Ignore errors if the window is closed
     
     def add_to_watchlist(self):
         """Add a stock to the watchlist"""
@@ -268,7 +280,8 @@ class StockMonitorModule:
             # Send notification
             self.send_notification(
                 f"Added {ticker}",
-                f"{ticker} added to watchlist at ${current_price:.2f}"
+                f"{ticker} added to watchlist at ${current_price:.2f}",
+                notification_type="info"
             )
             
             self.status_label.config(
@@ -324,8 +337,9 @@ class StockMonitorModule:
                 self.watchlist[ticker]['data'] = hist
                 
                 self.save_watchlist()
+                self.check_alerts(ticker, float(current_price))
                 self.display_watchlist()
-                
+
                 self.status_label.config(
                     text=f"✓ {ticker} refreshed: ${current_price:.2f}",
                     fg=self.colors['success']
@@ -368,9 +382,10 @@ class StockMonitorModule:
                         self.watchlist[ticker]['change_pct'] = float(change_pct)
                         self.watchlist[ticker]['last_updated'] = datetime.now().isoformat()
                         self.watchlist[ticker]['data'] = hist
+                        self.parent.after(0, lambda t=ticker, p=float(current_price): self.check_alerts(t, p))
                 except:
                     pass  # Skip failed tickers
-            
+
             # Update UI on main thread
             self.parent.after(0, self.save_watchlist)
             self.parent.after(0, self.display_watchlist)
@@ -477,6 +492,18 @@ class StockMonitorModule:
         
         tk.Button(
             actions,
+            text="🔔 Alert",
+            font=("Segoe UI", 9),
+            bg=self.colors['warning'],
+            fg="white",
+            cursor="hand2",
+            command=lambda t=ticker, p=price: self.open_alert_dialog(t, p),
+            padx=8,
+            pady=3
+        ).pack(side=tk.LEFT, padx=2)
+
+        tk.Button(
+            actions,
             text="✕",
             font=("Segoe UI", 9),
             bg=self.colors['danger'],
@@ -580,7 +607,158 @@ class StockMonitorModule:
             print(f"Error loading watchlist: {e}")
             self.watchlist = {}
     
-    def send_notification(self, title, message):
+    # ── Alert system ──────────────────────────────────────────────────────────
+
+    def load_alerts(self):
+        """Load price alerts from file."""
+        try:
+            if os.path.exists(self.alerts_file):
+                with open(self.alerts_file, 'r') as f:
+                    self.alerts = json.load(f)
+        except Exception as e:
+            print(f"Error loading alerts: {e}")
+            self.alerts = {}
+
+    def save_alerts(self):
+        """Persist alerts to disk."""
+        try:
+            os.makedirs(os.path.dirname(self.alerts_file), exist_ok=True)
+            with open(self.alerts_file, 'w') as f:
+                json.dump(self.alerts, f, indent=2)
+        except Exception as e:
+            print(f"Error saving alerts: {e}")
+
+    def open_alert_dialog(self, ticker, current_price):
+        """Open a dialog to create or view alerts for a ticker."""
+        from tkinter import simpledialog
+        win = tk.Toplevel(self.parent)
+        win.title(f"🔔 Alerts — {ticker}")
+        win.configure(bg=self.colors['background'])
+        win.resizable(False, False)
+        win.geometry("360x400")
+        win.grab_set()
+
+        tk.Label(win, text=f"🔔  Price Alerts for {ticker}",
+                 font=("Segoe UI", 13, "bold"),
+                 bg=self.colors['background'], fg=self.colors['text']).pack(pady=(16, 4))
+        tk.Label(win, text=f"Current price: ${current_price:.2f}",
+                 font=("Segoe UI", 10),
+                 bg=self.colors['background'], fg=self.colors['text_dim']).pack(pady=(0, 12))
+
+        # ── Add new alert ──────────────────────────────────────────────────
+        add_frame = tk.Frame(win, bg=self.colors['card_bg'], pady=10, padx=12)
+        add_frame.pack(fill=tk.X, padx=14)
+        tk.Label(add_frame, text="New alert:", font=("Segoe UI", 10, "bold"),
+                 bg=self.colors['card_bg'], fg=self.colors['text']).grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 6))
+
+        alert_type_var = tk.StringVar(value="above")
+        for i, (val, lbl) in enumerate([("above", "Price above $"), ("below", "Price below $"), ("pct_up", "Change % ≥"), ("pct_down", "Change % ≤ −")]):
+            tk.Radiobutton(add_frame, text=lbl, variable=alert_type_var, value=val,
+                           font=("Segoe UI", 10), bg=self.colors['card_bg'], fg=self.colors['text'],
+                           selectcolor=self.colors['background'],
+                           activebackground=self.colors['card_bg']).grid(row=1 + i // 2, column=i % 2, sticky="w")
+
+        threshold_entry = tk.Entry(add_frame, font=("Segoe UI", 11), width=10,
+                                   bg=self.colors['background'], fg=self.colors['text'],
+                                   insertbackground=self.colors['text'])
+        threshold_entry.grid(row=3, column=0, columnspan=2, pady=(8, 4), sticky="w")
+
+        def add_alert():
+            try:
+                val = float(threshold_entry.get().strip())
+            except ValueError:
+                return
+            ticker_alerts = self.alerts.setdefault(ticker, [])
+            ticker_alerts.append({
+                'type': alert_type_var.get(),
+                'threshold': val,
+                'triggered': False,
+                'created_at': datetime.now().isoformat()
+            })
+            self.save_alerts()
+            refresh_list()
+            threshold_entry.delete(0, tk.END)
+
+        tk.Button(add_frame, text="➕ Add Alert", command=add_alert,
+                  bg=self.colors['accent'], fg="white", font=("Segoe UI", 10),
+                  relief=tk.FLAT, cursor="hand2").grid(row=3, column=2, padx=8, pady=(8, 4))
+
+        # ── Existing alerts list ───────────────────────────────────────────
+        tk.Label(win, text="Active alerts:", font=("Segoe UI", 10, "bold"),
+                 bg=self.colors['background'], fg=self.colors['text']).pack(anchor="w", padx=16, pady=(10, 2))
+
+        list_frame = tk.Frame(win, bg=self.colors['background'])
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=14)
+
+        def refresh_list():
+            for w in list_frame.winfo_children():
+                try: w.destroy()
+                except: pass
+            ticker_alerts = self.alerts.get(ticker, [])
+            if not ticker_alerts:
+                tk.Label(list_frame, text="No alerts set.", font=("Segoe UI", 10),
+                         bg=self.colors['background'], fg=self.colors['text_dim']).pack(pady=6)
+                return
+            labels = {'above': 'Above $', 'below': 'Below $', 'pct_up': 'Change ≥ +', 'pct_down': 'Change ≤ −'}
+            for idx, alert in enumerate(ticker_alerts):
+                row = tk.Frame(list_frame, bg=self.colors['card_bg'])
+                row.pack(fill=tk.X, pady=2)
+                status = "✅" if alert['triggered'] else "⏳"
+                lbl = labels.get(alert['type'], '')
+                threshold = alert['threshold']
+                suffix = "%" if alert['type'] in ('pct_up', 'pct_down') else ""
+                tk.Label(row, text=f"{status} {lbl}{threshold:.2f}{suffix}",
+                         font=("Segoe UI", 10), bg=self.colors['card_bg'], fg=self.colors['text']).pack(side=tk.LEFT, padx=8, pady=4)
+
+                def delete_alert(i=idx):
+                    self.alerts[ticker].pop(i)
+                    if not self.alerts[ticker]:
+                        del self.alerts[ticker]
+                    self.save_alerts()
+                    refresh_list()
+
+                tk.Button(row, text="✕", command=delete_alert,
+                          bg=self.colors['danger'], fg="white", font=("Segoe UI", 8),
+                          relief=tk.FLAT, cursor="hand2", padx=5).pack(side=tk.RIGHT, padx=4)
+
+        refresh_list()
+
+    def check_alerts(self, ticker, current_price):
+        """Check all active alerts for ticker against current_price and fire if triggered."""
+        ticker_alerts = self.alerts.get(ticker, [])
+        if not ticker_alerts:
+            return
+        changed = False
+        for alert in ticker_alerts:
+            if alert.get('triggered'):
+                continue
+            atype = alert['type']
+            threshold = alert['threshold']
+            fired = False
+            if atype == 'above' and current_price >= threshold:
+                fired = True
+                msg = f"{ticker} hit ${current_price:.2f} (alert: above ${threshold:.2f})"
+            elif atype == 'below' and current_price <= threshold:
+                fired = True
+                msg = f"{ticker} hit ${current_price:.2f} (alert: below ${threshold:.2f})"
+            elif atype == 'pct_up':
+                pct = self.watchlist.get(ticker, {}).get('change_pct', 0)
+                if pct >= threshold:
+                    fired = True
+                    msg = f"{ticker} up {pct:.2f}% today (alert: ≥ +{threshold:.2f}%)"
+            elif atype == 'pct_down':
+                pct = self.watchlist.get(ticker, {}).get('change_pct', 0)
+                if pct <= -threshold:
+                    fired = True
+                    msg = f"{ticker} down {abs(pct):.2f}% today (alert: ≤ −{threshold:.2f}%)"
+            if fired:
+                alert['triggered'] = True
+                changed = True
+                self.send_notification(f"🔔 Price Alert: {ticker}", msg, notification_type="warning")
+        if changed:
+            self.save_alerts()
+
+    def send_notification(self, title, message, notification_type="info"):
         """Send notification (optional integration)"""
         try:
             from notification_manager import send_notification
@@ -588,7 +766,7 @@ class StockMonitorModule:
                 title=title,
                 message=message,
                 module="Stock Monitor",
-                notification_type="info",
+                notification_type=notification_type,
                 play_sound=False
             )
         except:

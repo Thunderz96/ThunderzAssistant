@@ -435,28 +435,95 @@ class FileOrganizerModule:
             messagebox.showerror("Scan Error", f"Failed to scan folder:\n{str(e)}")
     
     def display_scan_results(self):
-        """Display the scan results in the UI"""
-        # Clear previous display
+        """Display a dry-run preview table with per-file checkboxes."""
         for widget in self.results_container.winfo_children():
             widget.destroy()
-        
-        # Calculate total files
+
         total_files = sum(len(files) for files in self.scan_results.values())
-        
-        # Header
-        header = tk.Label(
-            self.results_container,
-            text=f"Found {total_files} files to organize:",
-            font=("Segoe UI", 14, "bold"),
-            bg=self.colors['bg_dark'],
-            fg=self.colors['text']
-        )
-        header.pack(pady=(10, 20))
-        
-        # Display each category with file count
+
+        # Header row
+        hdr_frame = tk.Frame(self.results_container, bg=self.colors['bg_dark'])
+        hdr_frame.pack(fill="x", padx=10, pady=(10, 4))
+        tk.Label(hdr_frame, text=f"Preview — {total_files} files to organise",
+                 font=("Segoe UI", 13, "bold"),
+                 bg=self.colors['bg_dark'], fg=self.colors['text']).pack(side="left")
+
+        # Select-all / none
+        self._select_all_var = tk.BooleanVar(value=True)
+        def _toggle_all():
+            v = self._select_all_var.get()
+            for var in self._preview_check_vars.values():
+                var.set(v)
+            self._refresh_organise_btn()
+
+        tk.Checkbutton(hdr_frame, text="Select all",
+                       variable=self._select_all_var, command=_toggle_all,
+                       bg=self.colors['bg_dark'], fg=self.colors['text'],
+                       selectcolor=self.colors['bg_medium'],
+                       activebackground=self.colors['bg_dark'],
+                       font=("Segoe UI", 10)).pack(side="right")
+
+        # Scrollable table
+        outer = tk.Frame(self.results_container, bg=self.colors['bg_dark'])
+        outer.pack(fill="both", expand=True, padx=10, pady=4)
+        tbl_canvas = tk.Canvas(outer, bg=self.colors['bg_dark'], highlightthickness=0)
+        tbl_sb = ttk.Scrollbar(outer, orient="vertical", command=tbl_canvas.yview)
+        tbl_inner = tk.Frame(tbl_canvas, bg=self.colors['bg_dark'])
+        tbl_inner.bind("<Configure>", lambda e: tbl_canvas.configure(scrollregion=tbl_canvas.bbox("all")))
+        tbl_canvas.create_window((0, 0), window=tbl_inner, anchor="nw")
+        tbl_canvas.configure(yscrollcommand=tbl_sb.set)
+        tbl_canvas.pack(side="left", fill="both", expand=True)
+        tbl_sb.pack(side="right", fill="y")
+
+        # Column headers
+        icons = {'Images': '📷', 'Documents': '📄', 'Videos': '🎥', 'Audio': '🎵',
+                 'Archives': '📦', 'Code': '💻', 'Executables': '⚙️', 'Other': '📁'}
+
+        tk.Label(tbl_inner, text="✓", width=3, font=("Segoe UI", 10, "bold"),
+                 bg=self.colors['bg_medium'], fg=self.colors['text']).grid(row=0, column=0, sticky="nsew", padx=1, pady=1)
+        tk.Label(tbl_inner, text="File name", font=("Segoe UI", 10, "bold"), anchor="w",
+                 bg=self.colors['bg_medium'], fg=self.colors['text']).grid(row=0, column=1, sticky="nsew", padx=1, pady=1)
+        tk.Label(tbl_inner, text="→  Destination folder", font=("Segoe UI", 10, "bold"), anchor="w",
+                 bg=self.colors['bg_medium'], fg=self.colors['text']).grid(row=0, column=2, sticky="nsew", padx=1, pady=1)
+        tbl_inner.columnconfigure(1, weight=1)
+        tbl_inner.columnconfigure(2, weight=1)
+
+        self._preview_check_vars = {}  # "Category/filename" → BooleanVar
+        row_idx = 1
         for category, files in self.scan_results.items():
-            if len(files) > 0:  # Only show categories with files
-                self.create_category_card(category, files)
+            if not files:
+                continue
+            icon = icons.get(category, '📁')
+            dest_folder = os.path.join(self.current_folder, category)
+            for filename in files:
+                key = f"{category}/{filename}"
+                var = tk.BooleanVar(value=True)
+                self._preview_check_vars[key] = var
+                row_bg = self.colors['bg_dark'] if row_idx % 2 == 0 else self.colors['bg_medium']
+
+                cb = tk.Checkbutton(tbl_inner, variable=var,
+                                    bg=row_bg, activebackground=row_bg,
+                                    selectcolor=self.colors['bg_dark'],
+                                    command=self._refresh_organise_btn)
+                cb.grid(row=row_idx, column=0, sticky="nsew", padx=1, pady=1)
+
+                tk.Label(tbl_inner, text=filename, font=("Segoe UI", 9), anchor="w",
+                         bg=row_bg, fg=self.colors['text']).grid(row=row_idx, column=1, sticky="nsew", padx=4, pady=1)
+                tk.Label(tbl_inner, text=f"{icon} {category}{os.sep}", font=("Segoe UI", 9),
+                         anchor="w", bg=row_bg, fg=self.colors['accent']).grid(row=row_idx, column=2, sticky="nsew", padx=4, pady=1)
+                row_idx += 1
+
+        self._refresh_organise_btn()
+
+    def _refresh_organise_btn(self):
+        """Update Organise button label with checked count."""
+        if not hasattr(self, '_preview_check_vars'):
+            return
+        count = sum(1 for v in self._preview_check_vars.values() if v.get())
+        self.organize_btn.config(
+            text=f"✨ Organise Selected ({count} files)",
+            state="normal" if count > 0 else "disabled"
+        )
     
     def create_category_card(self, category, files):
         """Create a card showing category info"""
@@ -526,34 +593,48 @@ class FileOrganizerModule:
         3. Handles duplicate filenames
         4. Tracks moves for undo functionality
         """
-        # Confirm with user
-        total_files = sum(len(files) for files in self.scan_results.values())
-        
+        # Build the selected-file set from checkboxes
+        check_vars = getattr(self, '_preview_check_vars', {})
+        selected_keys = {k for k, v in check_vars.items() if v.get()} if check_vars else None
+
+        # Count selected files
+        if selected_keys is not None:
+            total_files = len(selected_keys)
+        else:
+            total_files = sum(len(files) for files in self.scan_results.values())
+
+        if total_files == 0:
+            messagebox.showinfo("Nothing Selected", "No files are selected to organise.")
+            return
+
         response = messagebox.askyesno(
-            "Confirm Organization",
+            "Confirm Organisation",
             f"This will move {total_files} files into category folders.\n\n"
             f"Category folders will be created in:\n{self.current_folder}\n\n"
             "You can undo this action if needed.\n\nContinue?"
         )
-        
+
         if not response:
             return
-        
+
         # Track all moves for undo
         moves = []
-        
+
         try:
             # Process each category
             for category, files in self.scan_results.items():
                 if len(files) == 0:
                     continue
-                
+
                 # Create category folder
                 category_path = os.path.join(self.current_folder, category)
-                os.makedirs(category_path, exist_ok=True)
-                
-                # Move each file
+
+                # Move each file (only if selected)
                 for filename in files:
+                    key = f"{category}/{filename}"
+                    if selected_keys is not None and key not in selected_keys:
+                        continue  # user unchecked this file
+                    os.makedirs(category_path, exist_ok=True)
                     source = os.path.join(self.current_folder, filename)
                     destination = os.path.join(category_path, filename)
                     

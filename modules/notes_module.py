@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import json
 import os
 import time
 import uuid
 import re
+import zipfile
 from datetime import datetime
 
 class NotesModule:
@@ -161,6 +162,8 @@ class NotesModule:
                  bg=self.colors['success'], fg="white", relief=tk.FLAT).pack(side=tk.RIGHT, padx=2)
         tk.Button(btn_frame, text="👁️ Preview", command=self.toggle_preview,
                  bg=self.colors['primary'], fg="white", relief=tk.FLAT).pack(side=tk.RIGHT, padx=2)
+        tk.Button(btn_frame, text="📤 Export", command=self.open_export_menu,
+                 bg=self.colors['card_bg'], fg=self.colors['text'], relief=tk.FLAT).pack(side=tk.RIGHT, padx=2)
 
         # Editor Body (Text Area)
         self.text_frame = tk.Frame(self.right_panel, bg=self.colors['content_bg'], padx=10, pady=5)
@@ -386,3 +389,101 @@ class NotesModule:
             #  but for simplicity we just render plain text with block tags first)
             
         self.preview_widget.config(state=tk.DISABLED)
+
+    # ── Export ────────────────────────────────────────────────────────────────
+
+    def open_export_menu(self):
+        """Show a small popup with export options."""
+        menu = tk.Menu(self.parent, tearoff=0,
+                       bg=self.colors['card_bg'], fg=self.colors['text'],
+                       activebackground=self.colors['accent'], activeforeground="white")
+        menu.add_command(label="📄  Export current note as Markdown (.md)", command=self.export_current_md)
+        menu.add_command(label="📃  Export current note as Text (.txt)",    command=self.export_current_txt)
+        menu.add_separator()
+        menu.add_command(label="🗂️  Export ALL notes as ZIP (.zip of .md)", command=self.export_all_zip)
+        try:
+            x = self.parent.winfo_rootx() + 200
+            y = self.parent.winfo_rooty() + 80
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
+
+    def _safe_filename(self, title: str) -> str:
+        """Strip characters that are illegal in filenames."""
+        return re.sub(r'[\\/:*?"<>|]', '_', title).strip() or "untitled"
+
+    def _get_current_note(self):
+        """Return the current note dict, or None."""
+        if not self.current_note_id:
+            messagebox.showwarning("No Note Selected", "Please open a note before exporting.")
+            return None
+        return next((n for n in self.notes if n['id'] == self.current_note_id), None)
+
+    def export_current_md(self):
+        note = self._get_current_note()
+        if not note:
+            return
+        default_name = self._safe_filename(note.get('title', 'note')) + ".md"
+        path = filedialog.asksaveasfilename(
+            defaultextension=".md",
+            filetypes=[("Markdown files", "*.md"), ("All files", "*.*")],
+            initialfile=default_name,
+            title="Export Note as Markdown"
+        )
+        if not path:
+            return
+        try:
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(f"# {note.get('title', 'Untitled')}\n\n")
+                f.write(note.get('content', ''))
+            messagebox.showinfo("Exported", f"Note saved to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Export Error", str(e))
+
+    def export_current_txt(self):
+        note = self._get_current_note()
+        if not note:
+            return
+        default_name = self._safe_filename(note.get('title', 'note')) + ".txt"
+        path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            initialfile=default_name,
+            title="Export Note as Text"
+        )
+        if not path:
+            return
+        try:
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(f"{note.get('title', 'Untitled')}\n")
+                f.write("=" * len(note.get('title', 'Untitled')) + "\n\n")
+                f.write(note.get('content', ''))
+            messagebox.showinfo("Exported", f"Note saved to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Export Error", str(e))
+
+    def export_all_zip(self):
+        if not self.notes:
+            messagebox.showinfo("No Notes", "There are no notes to export.")
+            return
+        path = filedialog.asksaveasfilename(
+            defaultextension=".zip",
+            filetypes=[("ZIP archive", "*.zip"), ("All files", "*.*")],
+            initialfile="notes_export.zip",
+            title="Export All Notes as ZIP"
+        )
+        if not path:
+            return
+        try:
+            with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                seen_names = {}
+                for note in self.notes:
+                    base = self._safe_filename(note.get('title', 'untitled'))
+                    count = seen_names.get(base, 0)
+                    fname = f"{base}.md" if count == 0 else f"{base}_{count}.md"
+                    seen_names[base] = count + 1
+                    content = f"# {note.get('title', 'Untitled')}\n\n{note.get('content', '')}"
+                    zf.writestr(fname, content)
+            messagebox.showinfo("Exported", f"All {len(self.notes)} notes saved to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Export Error", str(e))

@@ -149,8 +149,9 @@ check_git.bat
 clear_icon_cache.bat
 install_discord_presence.bat
 
-# Temporary batch scripts (keep versioned .bat files with git add -f)
-*.bat                    
+# Temporary batch scripts — versioned ones are explicitly excluded below
+*.bat
+!setup.bat
 
 # Documentation (local only)
 docs/GIT_CHEAT_SHEET.md
