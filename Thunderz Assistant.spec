@@ -13,7 +13,7 @@ a = Analysis(
         ('docs', 'docs')
     ],
     # Hidden imports are libraries that PyInstaller sometimes misses
-    hiddenimports=['PIL', 'PIL.Image', 'PIL.ImageDraw', 'PIL.ImageTk', 'ast', 'asyncio', 'config', 'csv', 'ctypes', 'cv2', 'dashboard_module', 'discord_integration_module', 'discord_presence_module', 'discord_webhook_module', 'file_organizer_module', 'glizzy_module', 'logging', 'matplotlib', 'news_module', 'notes_module', 'notification_center_module', 'notification_manager', 'pathlib', 'pkgutil', 'pomodoro_module', 'psutil', 'pynvml', 'pypresence', 'pystray', 're', 'requests', 'shutil', 'stock_monitor_module', 'subprocess', 'system_monitor_module', 'tkinter', 'tkinter.scrolledtext', 'tray_manager', 'typing', 'uuid', 'weather_module', 'win32gui', 'win32process', 'winsdk', 'winsound', 'yfinance', 'zipfile'],    hookspath=[],
+    hiddenimports=['PIL', 'PIL.Image', 'PIL.ImageDraw', 'PIL.ImageTk', 'ast', 'asyncio', 'av', 'bs4', 'config', 'csv', 'ctypes', 'cv2', 'dashboard_module', 'diffusers', 'discord_integration_module', 'discord_presence_module', 'discord_webhook_module', 'file_organizer_module', 'glizzy_module', 'html', 'imageio', 'importlib', 'inspect', 'io', 'logging', 'matplotlib', 'news_module', 'notes_module', 'notification_center_module', 'notification_manager', 'pathlib', 'pomodoro_module', 'psutil', 'pygame', 'pynvml', 'pypresence', 'pystray', 're', 'requests', 'shutil', 'stock_monitor_module', 'subprocess', 'system_monitor_module', 'tempfile', 'tkinter', 'tkinter.scrolledtext', 'torch', 'traceback', 'tray_manager', 'typing', 'uuid', 'weather_module', 'win32gui', 'win32process', 'winsdk', 'winsound', 'yfinance', 'yt_dlp', 'zipfile'],    hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],

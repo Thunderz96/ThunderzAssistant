@@ -556,7 +556,15 @@ class DashboardModule:
         self.clock_label.pack(side=tk.RIGHT, padx=20)
 
         now = datetime.datetime.now()
-        greeting = "Good Morning" # (You can keep your full greeting logic here)
+        hour = now.hour
+        if hour < 12:
+            greeting = "Good Morning"
+        elif hour < 17:
+            greeting = "Good Afternoon"
+        elif hour < 21:
+            greeting = "Good Evening"
+        else:
+            greeting = "Good Night"
         
         username = self.config.get('username', 'User')
         tk.Label(header_frame, text=f"{greeting}, {username}", font=("Segoe UI", 28, "bold"),
