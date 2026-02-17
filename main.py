@@ -162,6 +162,7 @@ class ThunderzAssistant:
             is_internal_folder = "internal_modules" in m_dir
 
             for filename in os.listdir(m_dir):
+                # ── Standard .py module ──
                 if filename.endswith(".py") and filename not in ["__init__.py", "template_module.py"]:
                     module_name = filename[:-3]
                     file_path = os.path.join(m_dir, filename)
@@ -183,6 +184,36 @@ class ThunderzAssistant:
                                     })
                     except Exception as e:
                         print(f"⚠️ Could not load {filename}: {e}")
+
+                # ── Sub-package directory (e.g. modules/ff14/) ──
+                elif (
+                    os.path.isdir(os.path.join(m_dir, filename))
+                    and os.path.exists(os.path.join(m_dir, filename, "__init__.py"))
+                ):
+                    pkg_dir  = os.path.join(m_dir, filename)
+                    pkg_name = filename
+                    try:
+                        spec = importlib.util.spec_from_file_location(
+                            pkg_name,
+                            os.path.join(pkg_dir, "__init__.py"),
+                            submodule_search_locations=[pkg_dir],
+                        )
+                        gen_module = importlib.util.module_from_spec(spec)
+                        sys.modules[pkg_name] = gen_module
+                        spec.loader.exec_module(gen_module)
+
+                        for name, obj in inspect.getmembers(gen_module):
+                            if inspect.isclass(obj) and name.endswith("Module"):
+                                if hasattr(obj, "ICON"):
+                                    discovered.append({
+                                        "class": obj,
+                                        "name": name.replace("Module", ""),
+                                        "icon": obj.ICON,
+                                        "priority": getattr(obj, "PRIORITY", 99),
+                                        "is_internal": is_internal_folder
+                                    })
+                    except Exception as e:
+                        print(f"⚠️ Could not load package {pkg_name}: {e}")
         
         discovered.sort(key=lambda x: x['priority'])
         return discovered

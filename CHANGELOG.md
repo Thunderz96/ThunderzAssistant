@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.12.5] - 2026-02-16
+
+### Added — FF14 Module
+
+- **Settings Tab**: New `🛠️ Settings` tab for managing BIS (Best-in-Slot) consumables list.
+  - Add food and potions by name with XIVAPI lookup (🔍 button on every row).
+  - Two-strategy item lookup: exact `Name="…"` query first, then fuzzy fallback with limit=20 — fixes items like "Grade 4 Gemdraught of Mind" that previously failed to resolve.
+  - Consumables persist to SQLite (`ff14_consumables` table).
+
+- **Static Tab — Consumable Dropdowns**: Replaced XIVAPI search picker with inline `ttk.Combobox` dropdowns per member card, populated from the Settings consumables list. Includes ✕ clear buttons for food, potion, and gear set fields.
+
+- **Static Tab — Batch Craft Calculator**: New `🧮 Batch Craft` button opens a calculator dialog.
+  - **Food section**: enter total quantity to craft; split proportionally by member share.
+  - **Potion section**: extract-based input — enter how many Extract you have; calculator reads the recipe to find extract-per-craft and yield, distributes the extract pool across potion types proportionally, shows crafts + potions per type live.
+  - Saves result directly as a named crafting list (final consumable items, not pre-resolved base mats).
+
+- **Crafting Tab — Vendor Location Info**: Purchase materials now show an amber 📍 chip with the vendor zone (e.g., `📍 Tuliyollal`). Gathering materials show a green 📍 chip with the gathering zone. Vendor data is looked up via XIVAPI (`GilShopItem → GilShop → ENpcBase → Territory → PlaceName` chain) and cached in SQLite.
+
+- **Crafting Tab — Final Items clarity**: Crafting lists created from Static tab (both "Send to Crafting" and "Batch Craft") now store the final consumable items (e.g., `×150 Grade 4 Gemdraught of Dexterity`) in the Final Items panel. The Materials panel expands these to base ingredients on load via the existing `resolve_materials` pipeline.
+
+- **Loot Tab — Roster from Static**: Loot Tracker now reads its player roster directly from the `static_members` table. Roster add/remove is managed in the Static tab; a `🔄 Refresh Roster` button syncs changes.
+
+### Fixed — FF14 Module
+
+- **`update_item_source` silent failure**: The function previously used a plain `UPDATE` — if an item existed only as a recipe ingredient (never directly inserted into `items`), the row was missing and the update silently wrote nothing, leaving vendor/gathering zones blank. Changed to `INSERT … ON CONFLICT DO UPDATE` (upsert) so the row is created if needed. Click **🔄 Refresh** in the Crafting tab to re-trigger zone lookups for existing lists.
+
+- **Batch craft `KeyError: ''` crash**: `tkinter` trace_add passes 3 positional args `(var_name, index, mode)` which overrode default parameters in the old `_update_preview` signature. Fixed by using a `_make_updater()` factory function pattern — the `*_trace_args` swallow all three trace args while real values are properly closed over.
+
+---
+
 ## [1.12.4] - 2026-02-15
 
 ### Added

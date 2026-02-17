@@ -2,16 +2,25 @@
 
 A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, note-taking, and workflow optimization!
 
-![Version](https://img.shields.io/badge/version-1.12.4-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.12.5-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square&logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square&logo=windows)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 ---
 
-## 🎯 Current Version: **1.12.4**
+## 🎯 Current Version: **1.12.5**
 
-### 🎨 What's New in v1.12.4?
+### ⚔️ What's New in v1.12.5? — FF14 Module Overhaul
+- **🛠️ Settings Tab**: Manage your BIS consumables list (food & potions) with XIVAPI item lookup. Exact-name search fixes resolution of items like "Grade 4 Gemdraught of Mind".
+- **👥 Static Tab Dropdowns**: Inline food/potion/gear set dropdowns per member card (populated from Settings), with ✕ clear buttons.
+- **🧮 Batch Craft Calculator**: Enter how many Extract you have → calculator reads the potion recipe and distributes crafts proportionally across your static's potion mix, showing crafts + potions per type live.
+- **📍 Vendor & Gathering Locations**: Materials in the Crafting tab now show colored zone chips — amber for vendor locations, green for gathering zones.
+- **🎯 Final Items Clarity**: Crafting lists from Static tab show exact consumable quantities (e.g., `×150 Grade 4 Gemdraught of Dexterity`) in the Final Items panel.
+- **🔗 Loot Tab Roster Sync**: Loot Tracker now reads its roster from the Static tab's member list automatically.
+- **🐛 Vendor zone fix**: Fixed a silent SQLite `UPDATE` failure that prevented vendor/gathering zone data from being saved for recipe-only items.
+
+### 🎨 Previous: v1.12.4
 - **🔍 Command Palette (Ctrl+K)**: Instantly search modules, notes, and stocks.
 - **🎨 Theming System**: Switch between Dark Blue, OLED Black, and Slate themes.
 - **🔔 Stock Price Alerts**: Get notified when a watched stock hits your target.
