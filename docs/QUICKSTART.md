@@ -15,7 +15,7 @@ You should see Python 3.7 or higher. If not, download Python from [python.org](h
 
 In your terminal, navigate to the project folder:
 ```bash
-cd C:\Users\nickw\OneDrive\Documents\Programs\ThunderzAssistant
+cd C:\path\to\ThunderzAssistant
 ```
 
 ## Step 3: Install Dependencies

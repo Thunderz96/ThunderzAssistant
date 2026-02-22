@@ -2,16 +2,32 @@
 
 A modular, productivity-focused GUI application built with Python. Your Swiss Army knife for daily tasks, system monitoring, note-taking, and workflow optimization!
 
-![Version](https://img.shields.io/badge/version-1.12.5-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.13.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square&logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square&logo=windows)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 ---
 
-## 🎯 Current Version: **1.12.5**
+## 🎯 Current Version: **1.13.0**
 
-### ⚔️ What's New in v1.12.5? — FF14 Module Overhaul
+### 🔴 What's New in v1.13.0? — Live Home Lab Health Monitoring
+- **⚡ Global Auto-Polling**: A background health service starts at app boot and polls all IPAM hosts every 60 seconds — even when the Lab Planner tab isn't open.
+- **🔔 Smart Notifications**: Desktop alerts fire automatically when a service goes **offline** (error) or **recovers** (success). First-poll startup spam is suppressed.
+- **📊 Persistent Health Log**: Every check result is stored in a new `service_health_log` SQLite table for history and future trend analysis.
+- **🐳 Multi-Service per Host**: Schema migrated from `UNIQUE(ip_address)` to `UNIQUE(ip_address, port)` so Pi-Hole, Plex, Home Assistant, and Uptime Kuma can all coexist on the same Docker host IP.
+- **"Check Now" Button**: Triggers an immediate on-demand poll via the global service — no more manual per-host threads.
+- **🔒 Git-Safe IP Config**: Real homelab IPs stored in `data/lab_config.json` (git-ignored); code falls back to safe placeholders for public clones.
+
+### 🏠 Previous: v1.12.6 — Lab Planner Overhaul
+- **🏥 Service Health**: Live TCP/ping health checks for every IPAM host — green/red dot + latency, **Check All** runs concurrently in background.
+- **💻 SSH Quick-Connect**: One-click SSH launch to any host via Windows Terminal, PuTTY, or CMD.
+- **📓 Runbook**: Per-project lab notes backed by SQLite; seeded with Proxmox, Docker, and Pi-Hole starter guides.
+- **🔑 Credentials Vault**: PIN-gated (SHA-256) local password store with show/hide toggle and copy-to-clipboard.
+- **🐳 Docker Stacks**: Manage Compose YAML stacks with status tracking; seeded with Portainer, Pi-Hole, Plex, NPM, Uptime Kuma.
+- **🌐 Port field in IPAM**: Every host now has a port number used for TCP health checks and SSH defaults.
+
+### ⚔️ Previous: v1.12.5 — FF14 Module Overhaul
 - **🛠️ Settings Tab**: Manage your BIS consumables list (food & potions) with XIVAPI item lookup. Exact-name search fixes resolution of items like "Grade 4 Gemdraught of Mind".
 - **👥 Static Tab Dropdowns**: Inline food/potion/gear set dropdowns per member card (populated from Settings), with ✕ clear buttons.
 - **🧮 Batch Craft Calculator**: Enter how many Extract you have → calculator reads the potion recipe and distributes crafts proportionally across your static's potion mix, showing crafts + potions per type live.
@@ -137,6 +153,17 @@ Clean up messy folders instantly:
 - **Rich Presence**: Shows exactly what you're doing (e.g., "Writing Notes", "Focusing").
 - **Webhooks**: Send messages to Discord channels directly from the app.
 
+### 🏠 Home Lab Monitor (Lab Planner)
+Your homelab command center, always running in the background:
+- 🔴 **Live Health Polling**: Background service auto-polls every 60s from app startup — no manual button required.
+- 🔔 **Instant Notifications**: Alerts fire the moment a service goes down or recovers; first-poll guard prevents startup spam.
+- 📊 **Health Log**: Every check persisted to SQLite (`service_health_log`) for history and diagnostics.
+- 🌐 **IPAM / Network Mapper**: Track all hosts, VLANs, device types, ports, and notes in one table.
+- 💻 **SSH Quick-Connect**: One-click SSH to any IPAM host via Windows Terminal, PuTTY, or CMD.
+- 🐳 **Docker Stacks**: Store and manage Compose YAML for all your containers with status tracking.
+- 🔑 **Credentials Vault**: PIN-gated local password store — never plain-text, never leaves your machine.
+- 📓 **Runbook**: Per-project lab notes backed by SQLite; seeded with Proxmox, Docker, and Pi-Hole guides.
+
 ---
 
 ## 🚀 Quick Start
@@ -207,6 +234,8 @@ ThunderzAssistant/
 │   ├── notes.json               # Your notes
 │   ├── pomodoro_stats.json      # Focus history
 │   ├── stock_watchlist.json     # Market portfolio
+│   ├── lab_config.json          # 🏠 Homelab IPs (gitignored)
+│   ├── thunderz_data.db         # SQLite database (IPAM, health log, etc.)
 │   └── ...
 │
 ├── data.example/                # 📋 Default templates
@@ -220,11 +249,18 @@ ThunderzAssistant/
 │   ├── pomodoro_module.py       # Timer & Stats
 │   ├── stock_monitor_module.py  # Market tracker
 │   ├── system_monitor_module.py # Hardware stats
+│   ├── Lab_planner_module.py    # 🏠 Home Lab hub
 │   ├── notification_center_module.py
 │   ├── file_organizer_module.py
 │   ├── weather_module.py
 │   └── ...
-├── internal_modules/ 
+│
+├── utils/                       # 🛠️ Shared utilities
+│   ├── database_manager.py      # SQLite helpers & init
+│   ├── health_service.py        # 🏠 Background health polling
+│   └── notification_manager.py  # Notification singleton
+│
+├── internal_modules/
 |
 |
 └── docs/                        # 📚 Documentation
@@ -354,6 +390,9 @@ Want to add features? It's designed to be modular — no changes to `main.py` ne
 - ⚠️ **Never commit `config.py`** (contains API keys)
 - ✅ Always commit `config.example.py` (template)
 - ✅ `config.py` is in `.gitignore`
+- ⚠️ **Never commit `data/lab_config.json`** (contains real homelab IPs)
+- ✅ `data/` is fully git-ignored — all personal data stays local
+- ✅ Code falls back to safe `<PLACEHOLDER>` values when `lab_config.json` is absent
 
 **Setup guide:** [docs/setup/SECURITY.md](docs/setup/SECURITY.md)
 

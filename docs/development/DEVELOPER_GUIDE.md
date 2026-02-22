@@ -366,7 +366,7 @@ def calculate_something(self):
 
 ### First Time Setup
 ```bash
-cd C:\Users\nickw\OneDrive\Documents\Programs\ThunderzAssistant
+cd C:\path\to\ThunderzAssistant
 git init
 git add .
 git commit -m "Initial commit - v1.0.0"

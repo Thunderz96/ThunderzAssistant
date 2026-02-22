@@ -47,11 +47,13 @@ THEMES = {
 
 # Add modules directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'utils'))
 
 # Core Imports
 from discord_presence_module import set_presence
 from notification_manager import get_unread_count, register_observer
 from tray_manager import TrayManager
+from health_service import start_health_service, stop_health_service
 
 class ToolTip:
     """Tooltip class for showing help text on hover"""
@@ -136,6 +138,12 @@ class ThunderzAssistant:
         except:
             self.root.protocol("WM_DELETE_WINDOW", self.root.quit)
 
+        # Start global health polling service (polls IPAM hosts every 60s)
+        try:
+            start_health_service(self.root)
+        except Exception as e:
+            print(f"Warning: Health service failed to start: {e}")
+
     def handle_crash(self, exc, val, tb):
         """Global handler that ignores Zombie Widget errors"""
         error_text = str(val)
@@ -152,7 +160,9 @@ class ThunderzAssistant:
     def discover_modules(self):
         """Scans folders and flags internal modules"""
         discovered = []
-        module_dirs = [os.path.join(os.path.dirname(__file__), 'modules')]
+        module_dirs = [os.path.join(os.path.dirname(__file__), 'modules'),
+                       os.path.join(os.path.dirname(__file__), 'utils')
+                       ]
         
         if any(flag in sys.argv for flag in ["--internal", "-i"]):
             module_dirs.append(os.path.join(os.path.dirname(__file__), 'internal_modules'))

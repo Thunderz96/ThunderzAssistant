@@ -263,7 +263,7 @@ The enhanced System Monitor is now a **gaming performance tool**:
 
 ### **Update Dependencies:**
 ```bash
-cd C:\Users\nickw\OneDrive\Documents\Programs\ThunderzAssistant
+cd C:\path\to\ThunderzAssistant
 pip install -r requirements.txt
 ```
 

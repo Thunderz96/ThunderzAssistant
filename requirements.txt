@@ -37,6 +37,9 @@ pystray>=0.19.5  # System tray icon with menu
 # yfinance helper (ensures data parsing works on fresh installs)
 lxml>=4.9.0
 
+# Credentials Vault encryption (v1.12.7+)
+cryptography>=42.0.0   # Fernet symmetric encryption for vault passwords
+
 # Build Tools
 pyinstaller>=6.0.0 # For building standalone executables
 

@@ -21,7 +21,7 @@ Close Thunderz Assistant completely (if running)
 
 ### **2. Update Dependencies**
 ```bash
-cd C:\Users\nickw\OneDrive\Documents\Programs\ThunderzAssistant
+cd C:\path\to\ThunderzAssistant
 
 # Uninstall broken library
 pip uninstall gputil -y

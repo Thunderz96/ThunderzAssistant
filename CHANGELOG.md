@@ -6,6 +6,96 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.13.0] - 2026-02-21
+
+### Added — Phase 1: Live Home Lab Health Monitoring
+
+#### `utils/health_service.py` (NEW — Global Singleton Polling Service)
+- Background daemon thread polls **all IPAM hosts every 60 seconds**, starting at app boot — independent of which module is open.
+- **State tracking** keyed by `"ip:port"` composite string (`ServiceStatus` dataclass: ip, hostname, port, online, latency_ms, checked_at).
+- **Transition detection** compares previous vs current online state and fires desktop notifications on changes:
+  - Online → Offline: `error` notification — *"Pi-Hole went OFFLINE — &lt;docker-host&gt;:80 unreachable"*
+  - Offline → Online: `success` notification — *"Pi-Hole is back ONLINE — &lt;docker-host&gt;:80 recovered (12ms)"*
+- **First-poll guard** (`_initial_poll_complete` flag) — suppresses notifications on startup so you don't get false "went offline" spam.
+- **Observer pattern** — UI registers callbacks via `register_health_observer()`; callbacks dispatched via `root.after(0, cb)` to marshal to the tkinter main thread safely.
+- **Poll lock** (`threading.Lock`) prevents overlapping cycles if a check runs long.
+- **Check logic** — TCP `socket.connect_ex` when a port is defined; falls back to `subprocess ping -n 1 -w 2000` for portless hosts (same behavior as the original manual check).
+- Persists every check result to the new `service_health_log` SQLite table.
+- **Convenience functions**: `start_health_service(root)`, `stop_health_service()`, `get_health_status()`, `trigger_health_poll()`, `register_health_observer(cb)`, `unregister_health_observer(cb)`.
+
+#### Database (`utils/database_manager.py`)
+- **New `service_health_log` table** — stores every health check result (ip_address, hostname, port, online, latency_ms, checked_at). Indexed on `(ip_address, checked_at DESC)` for fast history queries.
+- **`ip_allocations` UNIQUE constraint migrated** from `UNIQUE(ip_address)` to `UNIQUE(ip_address, port)` — allows multiple Docker services (Pi-Hole:80, Plex:32400, HA:8123, etc.) to coexist on the same host IP. Migration uses a safe table-recreation pattern (`_ip_alloc_new`) so existing databases are upgraded transparently with no data loss.
+
+#### `data/lab_config.json` (NEW — Git-Safe Network Config)
+- Stores real homelab IPs (`gateway_ip`, `proxmox_ip`, `nas_ip`, `docker_ip`) in the `data/` directory, which is already git-ignored.
+- Code falls back to safe placeholder values (`<PROXMOX_IP>`, `<DOCKER_IP>`, etc.) when the file is absent — safe for public repo clones.
+
+#### Lab Planner — Service Health Tab Integration
+- **Auto-polling indicator**: Header now shows *"Auto-polling every 60 s"* — makes it clear polling runs globally.
+- **"Check Now" button**: Calls `trigger_health_poll()` on the global service for an immediate on-demand refresh (no more spinning up ad-hoc threads from the UI).
+- **Observer integration**: Tab registers with `register_health_observer()` on build; status dots update automatically whenever the background service completes a cycle.
+- **Composite row keying**: `_health_rows` dict now keyed by `"ip:port"` so multiple services on the same Docker host each get their own row and independent status dot.
+- Kept `_check_all_health()` + `_check_host_fallback()` as graceful fallback if `health_service` import fails.
+
+### Changed
+
+- **Lab Planner seed data** updated to real homelab IPs loaded from `lab_config.json`:
+  - Proxmox host: `<proxmox-ip>` (port `8006`)
+  - Docker services on `<docker-host>`: Pi-Hole `:80`, Plex `:32400`, Home Assistant `:8123`, Uptime Kuma `:3001`, Portainer `:9000`
+  - `_DEFAULT_NOTES` and `_DEFAULT_CREDS` updated to use `<PROXMOX_IP>` / `<DOCKER_IP>` placeholders for public-repo safety.
+- **`main.py`**: Imports and starts `health_service` at app boot (after tray manager init); wrapped in `try/except` so a missing optional dependency never prevents the app from launching.
+- **Lab Planner `open_ip_modal`**: Fixed UPDATE and DELETE queries to use `WHERE ip_address=? AND port=?` composite key — prevents row collisions when multiple services share the same IP.
+- **Lab Planner `_run_unifi_sync`**: Added `AND (port='' OR port IS NULL)` filter so UniFi device sync only touches portless host entries and never overwrites Docker service rows.
+
+---
+
+## [1.12.6] - 2026-02-19
+
+### Added — Lab Planner Module Overhaul
+
+- **🏥 Service Health Tab**: Live TCP/ping health checks for every IPAM entry.
+  - TCP port check (`socket.connect_ex`) when a port is defined — no special privileges required on Windows.
+  - Falls back to `subprocess ping -n 1` for hosts without a port number.
+  - Green/red status dot + latency in ms per host card; **Check All** button runs all checks concurrently in background threads.
+  - Cards sourced automatically from the Network Mapper (IPAM) table.
+
+- **💻 SSH Quick-Connect**: Launch an SSH session to any IPAM host in one click.
+  - Button in the Network Mapper toolbar opens a modal pre-filled with the selected host's IP.
+  - Choose launcher: **Windows Terminal** (`wt ssh user@ip`), **PuTTY** (`putty -ssh user@ip`), or **CMD** (`start cmd /k ssh user@ip`).
+  - Graceful `FileNotFoundError` message if the chosen terminal is not installed.
+
+- **📓 Runbook Tab**: Per-project lab journal backed by SQLite (`lab_notes` table).
+  - Seeded with starter notes for Proxmox initial setup, Docker on Proxmox, and Pi-Hole configuration.
+  - Left panel: scrollable project list with **+ New** and **🗑 Delete** (with confirmation).
+  - Right panel: title field + freeform text editor; **💾 Save** writes to DB and refreshes the list.
+
+- **🔑 Credentials Vault Tab**: PIN-gated password store backed by SQLite (`credentials` table).
+  - First use: set a PIN; subsequent visits: enter PIN to unlock. PIN stored as SHA-256 hash in the `settings` table — never plain text.
+  - Fields: Label, Username, Password (show/hide toggle), URL, Notes.
+  - **📋 Copy Password** button copies to clipboard without exposing the value on screen.
+  - **Reset Vault** option clears stored PIN and all credentials after double confirmation.
+
+- **Port column in Network Mapper (IPAM)**: New `port` field on every host record.
+  - Used by Service Health for TCP checks and by SSH Quick-Connect.
+  - Safe schema migration: `ALTER TABLE ip_allocations ADD COLUMN port` wrapped in `try/except` so existing databases are upgraded silently.
+  - Seeded IPs updated to flat `192.168.1.x` network matching current homelab layout (Cloud Gateway, Proxmox, UNAS2, Pi-Hole, Plex, Portainer, Uptime Kuma, NPM).
+
+- **🐳 Docker Stacks Tab**: Manage Compose stacks from within the app.
+  - Left panel: stack list with status badges (Not Deployed / Running / Stopped / Error).
+  - Right panel: full Compose YAML editor with **📋 Copy** to clipboard.
+  - Status dropdown lets you manually track deployment state.
+  - Seeded with starter stacks: Portainer CE, Pi-Hole, Plex, NGINX Proxy Manager, Uptime Kuma.
+  - Backed by the new `docker_stacks` SQLite table.
+
+- **Script Vault — Copy & Delete improvements**: Added **📋 Copy** button to copy the full script body to clipboard; delete prompts a confirmation dialog before removing.
+
+### Changed
+
+- `utils/database_manager.py`: Added `lab_notes`, `credentials`, and `docker_stacks` tables; safe port-column migration for `ip_allocations`.
+
+---
+
 ## [1.12.5] - 2026-02-16
 
 ### Added — FF14 Module
@@ -740,6 +830,7 @@ send_notification(
 - ~~Notification Center~~ - **Completed in v1.8.0**
 - ~~Stock Watchlist~~ - **Completed in v1.9.0**
 - ~~File Organizer~~ - **Completed in v1.5.0**
+- ~~Home Lab Health Monitoring (Phase 1)~~ - **Completed in v1.13.0**
 
 ### High Priority
 - **Quick Launcher**: Launch apps and files from Thunderz Assistant

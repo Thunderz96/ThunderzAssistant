@@ -58,6 +58,7 @@ dmypy.json
 # ===== IDE & EDITORS =====
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
