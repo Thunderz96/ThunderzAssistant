@@ -18,6 +18,7 @@ import subprocess
 import hashlib
 import base64
 import os
+import re
 import time
 import requests
 import urllib3
@@ -213,6 +214,173 @@ def _decrypt_password(pin: str, salt: bytes, ciphertext: str) -> str:
     except (InvalidToken, Exception):
         # Legacy plaintext row — return as-is so the user can re-save to encrypt
         return ciphertext
+
+
+class _SshOutputWindow:
+    """Floating Toplevel that streams SSH stdout/stderr in real time.
+
+    Thread-safe: append_line() and set_status() marshal via root.after(0, ...).
+    The Close button is disabled while the command is running and enabled
+    automatically when set_status() is called (i.e. when the job finishes).
+    Call set_cancel_cb(fn) to register a stop callback — this enables the
+    🛑 Stop button so the user can abort long-running commands at any time.
+    """
+
+    def __init__(self, root, title: str, colors: dict):
+        self._root = root
+        self._destroyed = False
+        self._cancel_cb = None
+
+        win = tk.Toplevel(root)
+        self._win = win
+        win.title(title)
+        win.geometry("800x480")
+        win.configure(bg=colors['background'])
+        win.resizable(True, True)
+        win.transient(root)
+        # Prevent accidental close while job is running
+        win.protocol("WM_DELETE_WINDOW", lambda: None)
+
+        # ── Header ────────────────────────────────────────────────────────────
+        hdr = tk.Frame(win, bg=colors['card_bg'], pady=6)
+        hdr.pack(fill=tk.X)
+        tk.Label(hdr, text=title,
+                 font=("Segoe UI", 11, "bold"),
+                 bg=colors['card_bg'], fg=colors['text'],
+                 anchor="w", padx=12).pack(fill=tk.X)
+
+        # ── Output area ───────────────────────────────────────────────────────
+        from tkinter.scrolledtext import ScrolledText
+        self._text = ScrolledText(
+            win,
+            font=("Consolas", 10),
+            bg="#0D1117", fg="#D4D4D4",
+            insertbackground="white",
+            relief=tk.FLAT, padx=8, pady=6,
+            state=tk.DISABLED,
+        )
+        self._text.pack(fill=tk.BOTH, expand=True, padx=6, pady=(4, 0))
+
+        # Colour tags
+        self._text.tag_configure("normal",  foreground="#D4D4D4")
+        self._text.tag_configure("stderr",  foreground="#FFA726")
+        self._text.tag_configure("info",    foreground="#64B5F6")
+        self._text.tag_configure("success", foreground="#4CAF50")
+        self._text.tag_configure("error",   foreground="#F44336")
+
+        # ── Footer ────────────────────────────────────────────────────────────
+        foot = tk.Frame(win, bg=colors['background'], pady=6)
+        foot.pack(fill=tk.X, padx=8)
+        self._status_lbl = tk.Label(
+            foot, text="⏳  Running…",
+            font=("Segoe UI", 9, "italic"),
+            bg=colors['background'], fg=colors['text_dim'])
+        self._status_lbl.pack(side=tk.LEFT)
+        self._close_btn = tk.Button(
+            foot, text="Close",
+            bg=colors['card_bg'], fg=colors['text'],
+            relief=tk.FLAT, cursor="hand2",
+            state=tk.DISABLED,
+            command=self._close)
+        self._close_btn.pack(side=tk.RIGHT)
+        self._stop_btn = tk.Button(
+            foot, text="🛑  Stop",
+            bg="#B71C1C", fg="white",
+            relief=tk.FLAT, cursor="hand2",
+            state=tk.DISABLED,
+            command=self._on_stop)
+        self._stop_btn.pack(side=tk.RIGHT, padx=(0, 6))
+        tk.Button(
+            foot, text="📋  Copy Output",
+            bg=colors['card_bg'], fg=colors['text'],
+            relief=tk.FLAT, cursor="hand2",
+            command=self._copy_output,
+        ).pack(side=tk.RIGHT, padx=(0, 6))
+
+    # ── Public thread-safe API ─────────────────────────────────────────────────
+
+    def append_line(self, line: str, tag: str = "normal") -> None:
+        """Append one line of output.  Safe to call from any thread."""
+        self._root.after(0, lambda: self._do_append(line, tag))
+
+    def set_status(self, text: str, fg_color: str = "#64B5F6") -> None:
+        """Update the footer status, enable Close, and disable Stop."""
+        self._root.after(0, lambda: self._do_set_status(text, fg_color))
+
+    def set_cancel_cb(self, cb) -> None:
+        """Register a cancel callback and enable the Stop button.
+
+        Pass a zero-argument callable (e.g. channel.close) that will be
+        invoked when the user clicks 🛑 Stop.  Call from any thread.
+        """
+        self._cancel_cb = cb
+        self._root.after(0, self._enable_stop)
+
+    def get_all_text(self) -> str:
+        return self._text.get("1.0", tk.END)
+
+    # ── Internal ──────────────────────────────────────────────────────────────
+
+    def _enable_stop(self) -> None:
+        if self._destroyed:
+            return
+        try:
+            self._stop_btn.config(state=tk.NORMAL)
+        except tk.TclError:
+            self._destroyed = True
+
+    def _on_stop(self) -> None:
+        """User clicked Stop — invoke cancel callback and update UI."""
+        cb = self._cancel_cb
+        self._cancel_cb = None
+        if cb:
+            try:
+                self._stop_btn.config(state=tk.DISABLED, text="Stopping…")
+                self._status_lbl.config(text="⏳  Stopping…", fg="#FFA726")
+            except tk.TclError:
+                pass
+            cb()
+
+    def _copy_output(self) -> None:
+        """Copy all output text to the system clipboard."""
+        try:
+            text = self._text.get("1.0", tk.END).strip()
+            self._win.clipboard_clear()
+            self._win.clipboard_append(text)
+        except tk.TclError:
+            pass
+
+    def _do_append(self, line: str, tag: str) -> None:
+        if self._destroyed:
+            return
+        try:
+            self._text.config(state=tk.NORMAL)
+            self._text.insert(tk.END, line + "\n", tag)
+            self._text.see(tk.END)
+            self._text.config(state=tk.DISABLED)
+        except tk.TclError:
+            self._destroyed = True
+
+    def _do_set_status(self, text: str, fg_color: str) -> None:
+        if self._destroyed:
+            return
+        try:
+            self._status_lbl.config(text=text, fg=fg_color)
+            self._close_btn.config(state=tk.NORMAL)
+            # Disable Stop — job is finished (completed, failed, or cancelled)
+            self._stop_btn.config(state=tk.DISABLED, text="🛑  Stop")
+            self._cancel_cb = None
+            # Re-enable window close now that the job is done
+            self._win.protocol("WM_DELETE_WINDOW", self._close)
+        except tk.TclError:
+            self._destroyed = True
+
+    def _close(self) -> None:
+        self._destroyed = True
+        try:
+            self._win.destroy()
+        except tk.TclError:
+            pass
 
 
 class LabPlannerModule:
@@ -644,6 +812,172 @@ class LabPlannerModule:
             print(f"❌ Sync error: {e}")
 
     # ═════════════════════════════════════════════════════════════════════════
+    # 🔌 SSH HELPERS  (Phase 2)
+    # ═════════════════════════════════════════════════════════════════════════
+
+    def _get_ssh_hosts(self) -> list:
+        """Return hostnames of portless IPAM entries (SSH-capable hosts)."""
+        rows = db.execute_query(
+            "SELECT hostname FROM ip_allocations "
+            "WHERE (port='' OR port IS NULL) AND hostname IS NOT NULL "
+            "ORDER BY hostname") or []
+        return [r[0] for r in rows if r[0]]
+
+    def _hostname_to_ip(self, hostname: str):
+        """Look up the IP address for a hostname from IPAM."""
+        rows = db.execute_query(
+            "SELECT ip_address FROM ip_allocations "
+            "WHERE hostname=? AND (port='' OR port IS NULL) LIMIT 1",
+            (hostname,))
+        return rows[0][0] if rows else None
+
+    def _ensure_vault_unlocked(self, on_success_cb):
+        """If vault is already unlocked call cb immediately.
+        Otherwise show a compact PIN dialog, verify, load salt, then call cb."""
+        if self._vault_pin is not None:
+            on_success_cb()
+            return
+
+        root = self.parent.winfo_toplevel()
+        dlg = tk.Toplevel(root)
+        dlg.title("Unlock Credentials Vault")
+        dlg.geometry("320x210")
+        dlg.resizable(False, False)
+        dlg.configure(bg=self.colors['background'])
+        dlg.transient(root)
+        dlg.grab_set()
+
+        tk.Label(dlg, text="🔑", font=("Segoe UI", 32),
+                 bg=self.colors['background'], fg=self.colors['text']).pack(pady=(18, 2))
+        tk.Label(dlg, text="Vault locked — enter PIN to continue",
+                 font=("Segoe UI", 10, "bold"),
+                 bg=self.colors['background'], fg=self.colors['text']).pack()
+        tk.Label(dlg, text="You'll only be asked once per session",
+                 font=("Segoe UI", 8, "italic"),
+                 bg=self.colors['background'], fg=self.colors['text_dim']).pack(pady=(2, 10))
+
+        pin_var = tk.StringVar()
+        pin_entry = tk.Entry(dlg, textvariable=pin_var, show="●", width=12,
+                             font=("Segoe UI", 13), justify="center",
+                             bg=self.colors['card_bg'], fg=self.colors['text'],
+                             insertbackground=self.colors['text'], relief=tk.FLAT)
+        pin_entry.pack(pady=2)
+        pin_entry.focus_set()
+
+        msg = tk.Label(dlg, text="", font=("Segoe UI", 8),
+                       bg=self.colors['background'], fg="#F44336")
+        msg.pack(pady=2)
+
+        def _attempt():
+            pin = pin_var.get().strip()
+            if not pin:
+                return
+            pin_row  = db.execute_query("SELECT value FROM settings WHERE key='vault_pin'")
+            salt_row = db.execute_query("SELECT value FROM settings WHERE key='vault_salt'")
+            if not pin_row or not pin_row[0][0]:
+                msg.config(text="No PIN set — unlock the Credentials tab first")
+                return
+            if _pin_hash(pin) != pin_row[0][0]:
+                msg.config(text="Incorrect PIN — try again")
+                pin_var.set("")
+                return
+            import base64 as _b64
+            if salt_row and salt_row[0][0]:
+                salt = _b64.b64decode(salt_row[0][0])
+            else:
+                salt = os.urandom(16)
+                db.execute_query(
+                    "INSERT OR REPLACE INTO settings (key,value) VALUES ('vault_salt',?)",
+                    (_b64.b64encode(salt).decode(),))
+            self._vault_pin  = pin
+            self._vault_salt = salt
+            self._vault_unlocked = True
+            dlg.destroy()
+            on_success_cb()
+
+        pin_entry.bind("<Return>", lambda e: _attempt())
+        tk.Button(dlg, text="Unlock",
+                  bg=self.colors['accent'], fg="white",
+                  font=("Segoe UI", 10, "bold"), relief=tk.FLAT, cursor="hand2",
+                  command=_attempt).pack(pady=6)
+
+    def _pick_credential(self, hostname: str, ip: str, on_picked_cb):
+        """Find a credential for the target host.
+
+        - No credentials in vault → show guidance message.
+        - Exactly one label matches hostname (case-insensitive) → use silently.
+        - Otherwise → show a small picker dialog.
+        Calls on_picked_cb(username: str, plaintext_password: str) on selection.
+        """
+        rows = db.execute_query(
+            "SELECT id, label, username, password FROM credentials") or []
+        if not rows:
+            messagebox.showinfo(
+                "No Credentials",
+                f"No credentials found in the vault.\n\n"
+                f"Add an entry for '{hostname}' in the Credentials tab first.",
+                parent=self.parent)
+            return
+
+        # Auto-match: label contains hostname or URL contains IP
+        matches = [r for r in rows
+                   if hostname.lower() in r[1].lower()
+                   or (ip and ip in (r[3] or ""))]
+
+        if len(matches) == 1:
+            _, _, username, enc_pw = matches[0]
+            password = _decrypt_password(self._vault_pin, self._vault_salt, enc_pw or "")
+            on_picked_cb(username, password)
+            return
+
+        # Show picker for ambiguous / no-match cases
+        root = self.parent.winfo_toplevel()
+        dlg = tk.Toplevel(root)
+        dlg.title(f"Choose credential for {hostname}")
+        dlg.geometry("380x280")
+        dlg.resizable(False, True)
+        dlg.configure(bg=self.colors['background'])
+        dlg.transient(root)
+        dlg.grab_set()
+
+        tk.Label(dlg,
+                 text=f"Select credentials to use for {hostname}:",
+                 font=("Segoe UI", 9),
+                 bg=self.colors['background'], fg=self.colors['text']
+                 ).pack(anchor="w", padx=12, pady=(12, 4))
+
+        lb = tk.Listbox(dlg, bg=self.colors['card_bg'], fg=self.colors['text'],
+                        selectbackground=self.colors['primary'],
+                        font=("Segoe UI", 10), relief=tk.FLAT, activestyle="none")
+        lb.pack(fill=tk.BOTH, expand=True, padx=12, pady=4)
+
+        display_rows = matches if matches else rows
+        for _, label, username, _ in display_rows:
+            lb.insert(tk.END, f"  {label}  ({username})")
+        if display_rows:
+            lb.selection_set(0)
+
+        def _use():
+            sel = lb.curselection()
+            if not sel:
+                return
+            _, _, username, enc_pw = display_rows[sel[0]]
+            password = _decrypt_password(self._vault_pin, self._vault_salt, enc_pw or "")
+            dlg.destroy()
+            on_picked_cb(username, password)
+
+        bf = tk.Frame(dlg, bg=self.colors['background'])
+        bf.pack(fill=tk.X, padx=12, pady=(4, 12))
+        tk.Button(bf, text="Use Selected",
+                  bg=self.colors['accent'], fg="white",
+                  relief=tk.FLAT, cursor="hand2", command=_use).pack(side=tk.LEFT)
+        tk.Button(bf, text="Cancel",
+                  bg=self.colors['card_bg'], fg=self.colors['text'],
+                  relief=tk.FLAT, cursor="hand2",
+                  command=dlg.destroy).pack(side=tk.LEFT, padx=8)
+        lb.bind("<Double-Button-1>", lambda e: _use())
+
+    # ═════════════════════════════════════════════════════════════════════════
     # 🐳 DOCKER STACKS
     # ═════════════════════════════════════════════════════════════════════════
 
@@ -704,6 +1038,28 @@ class LabPlannerModule:
                  bg=self.colors['background'], fg=self.colors['text_dim'],
                  insertbackground="white", relief=tk.FLAT, font=("Segoe UI", 9)
                  ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # Deploy To row
+        dr = tk.Frame(right, bg=self.colors['card_bg'])
+        dr.pack(fill=tk.X, padx=10, pady=(0, 4))
+        tk.Label(dr, text="Deploy To:", bg=self.colors['card_bg'],
+                 fg=self.colors['text'], font=("Segoe UI", 9)
+                 ).pack(side=tk.LEFT, padx=(0, 6))
+        self._stack_deploy_var = tk.StringVar()
+        ssh_hosts = self._get_ssh_hosts()
+        self._stack_deploy_cb = ttk.Combobox(
+            dr, textvariable=self._stack_deploy_var,
+            values=ssh_hosts, state="readonly", width=22, font=("Segoe UI", 9))
+        self._stack_deploy_cb.pack(side=tk.LEFT)
+        # Default deploy target to the Docker host from lab_config.json
+        lab = _load_lab_config()
+        docker_ip = lab.get("docker_ip", "")
+        if docker_ip:
+            rows = db.execute_query(
+                "SELECT hostname FROM ip_allocations "
+                "WHERE ip_address=? AND (port='' OR port IS NULL) LIMIT 1",
+                (docker_ip,))
+            if rows and rows[0][0] and rows[0][0] in ssh_hosts:
+                self._stack_deploy_var.set(rows[0][0])
         tk.Label(right, text="docker-compose.yml",
                  bg=self.colors['card_bg'], fg=self.colors['text_dim'],
                  font=("Segoe UI", 8, "italic")).pack(anchor="w", padx=12)
@@ -713,6 +1069,22 @@ class LabPlannerModule:
         self._stack_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 4))
         ab = tk.Frame(right, bg=self.colors['card_bg'])
         ab.pack(fill=tk.X, padx=10, pady=(0, 10))
+        tk.Button(ab, text="🚀  Deploy",
+                  bg="#0D47A1", fg="white",
+                  relief=tk.FLAT, cursor="hand2", command=self._deploy_stack
+                  ).pack(side=tk.LEFT, padx=(0, 6))
+        tk.Button(ab, text="⏹  Stop",
+                  bg="#B71C1C", fg="white",
+                  relief=tk.FLAT, cursor="hand2", command=self._stack_stop
+                  ).pack(side=tk.LEFT, padx=(0, 6))
+        tk.Button(ab, text="🔄  Restart",
+                  bg="#4A148C", fg="white",
+                  relief=tk.FLAT, cursor="hand2", command=self._stack_restart
+                  ).pack(side=tk.LEFT, padx=(0, 6))
+        tk.Button(ab, text="📜  Logs",
+                  bg=self.colors['card_bg'], fg=self.colors['text'],
+                  relief=tk.FLAT, cursor="hand2", command=self._stack_logs
+                  ).pack(side=tk.LEFT, padx=(0, 6))
         tk.Button(ab, text="📋 Copy Compose", bg=self.colors['primary'], fg="white",
                   relief=tk.FLAT, cursor="hand2", command=self._copy_compose
                   ).pack(side=tk.LEFT, padx=(0, 6))
@@ -735,13 +1107,15 @@ class LabPlannerModule:
         sid, _, _ = self._stack_data[sel[0]]
         self._cur_stack_id = sid
         row = db.execute_query(
-            "SELECT name,compose,status,notes FROM docker_stacks WHERE id=?", (sid,))
+            "SELECT name,compose,status,notes,deploy_target "
+            "FROM docker_stacks WHERE id=?", (sid,))
         if not row:
             return
-        name, compose, status, notes = row[0]
+        name, compose, status, notes, deploy_target = row[0]
         self._stack_name_var.set(name)
         self._stack_status_var.set(status or "Not Deployed")
         self._stack_notes_var.set(notes or "")
+        self._stack_deploy_var.set(deploy_target or "")
         self._stack_text.delete("1.0", tk.END)
         self._stack_text.insert(tk.END, compose or "")
 
@@ -765,14 +1139,17 @@ class LabPlannerModule:
             messagebox.showwarning("Missing Name",
                 "Stack name cannot be empty.", parent=self.parent)
             return
+        deploy_target = self._stack_deploy_var.get().strip()
         if self._cur_stack_id:
             db.execute_query(
-                "UPDATE docker_stacks SET name=?,compose=?,status=?,notes=? WHERE id=?",
-                (name, compose, status, notes, self._cur_stack_id))
+                "UPDATE docker_stacks SET name=?,compose=?,status=?,notes=?,"
+                "deploy_target=? WHERE id=?",
+                (name, compose, status, notes, deploy_target, self._cur_stack_id))
         else:
             self._cur_stack_id = db.execute_query(
-                "INSERT INTO docker_stacks (name,compose,status,notes) VALUES (?,?,?,?)",
-                (name, compose, status, notes))
+                "INSERT INTO docker_stacks (name,compose,status,notes,deploy_target) "
+                "VALUES (?,?,?,?,?)",
+                (name, compose, status, notes, deploy_target))
         self._load_stack_list()
 
     def _delete_stack(self):
@@ -795,6 +1172,224 @@ class LabPlannerModule:
         self.parent.clipboard_append(content)
         messagebox.showinfo("Copied",
             "Compose content copied to clipboard!", parent=self.parent)
+
+    # ── Shared SSH runner for stack operations ─────────────────────────────────
+
+    def _exec_stack_command(self, label: str, cmd: str,
+                            success_cb=None) -> None:
+        """Unlock vault → pick credential → open output window → ssh_execute.
+
+        Used by Stop, Restart, and Logs so they all share the same flow.
+        *success_cb* (optional) is called on exit code 0 from the main thread.
+        """
+        hostname = self._stack_deploy_var.get().strip()
+        if not hostname:
+            messagebox.showwarning("No Deploy Target",
+                "Set a 'Deploy To' host for this stack first.",
+                parent=self.parent)
+            return
+        ip = self._hostname_to_ip(hostname)
+        if not ip:
+            messagebox.showerror("Host Not Found",
+                f"Could not find an IP for '{hostname}' in IPAM.",
+                parent=self.parent)
+            return
+
+        def _after_unlock():
+            def _after_cred(username, password):
+                root = self.parent.winfo_toplevel()
+                win  = _SshOutputWindow(root, f"{label}  →  {hostname}",
+                                        self.colors)
+                win.append_line(f"$ {cmd}", "info")
+                win.append_line("─" * 60, "info")
+
+                def on_line(line, is_err):
+                    win.append_line(line, "stderr" if is_err else "normal")
+
+                def on_done(exit_code):
+                    if exit_code == 0:
+                        win.set_status("✅  Done", "#4CAF50")
+                        if success_cb:
+                            self.parent.winfo_toplevel().after(0, success_cb)
+                    elif exit_code == -2:
+                        win.set_status("🛑  Cancelled by user", "#FFA726")
+                    else:
+                        win.set_status(
+                            f"❌  Failed (exit {exit_code})", "#F44336")
+
+                def on_channel(channel):
+                    win.set_cancel_cb(channel.close)
+
+                try:
+                    from ssh_service import ssh_execute
+                    ssh_execute(ip, username, password, cmd,
+                                on_line, on_done, on_channel)
+                except Exception as exc:
+                    win.append_line(f"Error: {exc}", "error")
+                    win.set_status("❌  Could not start SSH session", "#F44336")
+
+            self._pick_credential(hostname, ip, _after_cred)
+
+        self._ensure_vault_unlocked(_after_unlock)
+
+    def _stack_remote_file(self) -> str | None:
+        """Return the remote compose path for the currently selected stack."""
+        name = self._stack_name_var.get().strip()
+        if not name:
+            return None
+        safe = name.lower().replace(" ", "_").replace("-", "_")
+        return f"/opt/stacks/{safe}/docker-compose.yml"
+
+    # ── Stack action buttons ────────────────────────────────────────────────────
+
+    def _stack_stop(self):
+        """Stop the selected stack (docker compose down)."""
+        if not self._cur_stack_id:
+            messagebox.showwarning("No Stack Selected",
+                "Select a stack from the list first.", parent=self.parent)
+            return
+        name = self._stack_name_var.get().strip()
+        rf   = self._stack_remote_file()
+        if not messagebox.askyesno(
+            "Confirm Stop",
+            f"Stop '{name}'?\n\nThis will run  docker compose down\n"
+            f"and remove the containers.",
+            parent=self.parent,
+        ):
+            return
+
+        def on_success():
+            db.execute_query(
+                "UPDATE docker_stacks SET status='Stopped' WHERE id=?",
+                (self._cur_stack_id,))
+            self._stack_status_var.set("Stopped")
+            self._load_stack_list()
+
+        self._exec_stack_command(
+            f"⏹  Stop  {name}",
+            f"docker compose -f {rf} down 2>&1",
+            on_success,
+        )
+
+    def _stack_restart(self):
+        """Restart the selected stack (docker compose restart)."""
+        if not self._cur_stack_id:
+            messagebox.showwarning("No Stack Selected",
+                "Select a stack from the list first.", parent=self.parent)
+            return
+        name = self._stack_name_var.get().strip()
+        rf   = self._stack_remote_file()
+        self._exec_stack_command(
+            f"🔄  Restart  {name}",
+            f"docker compose -f {rf} restart 2>&1",
+        )
+
+    def _stack_logs(self):
+        """Tail the last 200 log lines from the selected stack."""
+        if not self._cur_stack_id:
+            messagebox.showwarning("No Stack Selected",
+                "Select a stack from the list first.", parent=self.parent)
+            return
+        name = self._stack_name_var.get().strip()
+        rf   = self._stack_remote_file()
+        self._exec_stack_command(
+            f"📜  Logs  {name}",
+            f"docker compose -f {rf} logs --tail=200 --no-color 2>&1",
+        )
+
+    def _deploy_stack(self):
+        """Upload the compose file via SFTP then run docker compose up -d."""
+        if not self._cur_stack_id:
+            messagebox.showwarning("No Stack Selected",
+                "Select a stack from the list first.", parent=self.parent)
+            return
+        hostname = self._stack_deploy_var.get().strip()
+        if not hostname:
+            messagebox.showwarning("No Deploy Target",
+                "Set a 'Deploy To' host for this stack first.", parent=self.parent)
+            return
+        compose = self._stack_text.get("1.0", tk.END).strip()
+        if not compose:
+            messagebox.showwarning("Empty Compose",
+                "The compose file has no content.", parent=self.parent)
+            return
+        name = self._stack_name_var.get().strip()
+        ip   = self._hostname_to_ip(hostname)
+        if not ip:
+            messagebox.showerror("Host Not Found",
+                f"Could not find an IP for '{hostname}' in IPAM.", parent=self.parent)
+            return
+
+        safe_name   = name.lower().replace(" ", "_").replace("-", "_")
+        remote_dir  = f"/opt/stacks/{safe_name}"
+        remote_file = f"{remote_dir}/docker-compose.yml"
+        cmd = (f"docker compose -f {remote_file} up -d --remove-orphans 2>&1")
+
+        if not messagebox.askyesno(
+            "Confirm Deploy",
+            f"Deploy  '{name}'  →  {hostname} ({ip})?\n\n"
+            f"Compose file will be uploaded to:\n  {remote_file}\n\n"
+            "The stack will be (re)started with --remove-orphans.",
+            parent=self.parent,
+        ):
+            return
+
+        def _after_unlock():
+            def _after_cred(username, password):
+                root = self.parent.winfo_toplevel()
+                win  = _SshOutputWindow(
+                    root, f"🚀  Deploy  {name}  →  {hostname}", self.colors)
+                win.append_line(f"Connecting to {hostname} ({ip}) as {username}…", "info")
+                win.append_line(f"Uploading compose file → {remote_file}", "info")
+
+                def on_exec_line(line, is_err):
+                    win.append_line(line, "stderr" if is_err else "normal")
+
+                def on_exec_done(exit_code):
+                    if exit_code == 0:
+                        db.execute_query(
+                            "UPDATE docker_stacks SET status='Running' WHERE id=?",
+                            (self._cur_stack_id,))
+                        self._stack_status_var.set("Running")
+                        self._load_stack_list()
+                        win.set_status("✅  Deployed — stack is Running", "#4CAF50")
+                    elif exit_code == -2:
+                        win.set_status("🛑  Cancelled by user", "#FFA726")
+                    else:
+                        win.set_status(
+                            f"❌  docker compose failed (exit {exit_code})", "#F44336")
+
+                def on_exec_channel(channel):
+                    win.set_cancel_cb(channel.close)
+
+                def on_upload_done(ok):
+                    if not ok:
+                        win.append_line("❌  SFTP upload failed — check SSH credentials "
+                                        "and disk space.", "error")
+                        win.set_status("❌  Upload failed", "#F44336")
+                        return
+                    win.append_line(f"✓  Compose file uploaded to {remote_file}", "info")
+                    win.append_line(f"$ {cmd}", "info")
+                    win.append_line("─" * 60, "info")
+                    try:
+                        from ssh_service import ssh_execute
+                        ssh_execute(ip, username, password, cmd,
+                                    on_exec_line, on_exec_done, on_exec_channel)
+                    except Exception as exc:
+                        win.append_line(f"Error: {exc}", "error")
+                        win.set_status("❌  Could not run docker compose", "#F44336")
+
+                try:
+                    from ssh_service import ssh_upload
+                    ssh_upload(ip, username, password, compose,
+                               remote_file, on_upload_done)
+                except Exception as exc:
+                    win.append_line(f"Error starting SSH: {exc}", "error")
+                    win.set_status("❌  Could not start SSH session", "#F44336")
+
+            self._pick_credential(hostname, ip, _after_cred)
+
+        self._ensure_vault_unlocked(_after_unlock)
 
     # ═════════════════════════════════════════════════════════════════════════
     # 🏥 SERVICE HEALTH
@@ -856,6 +1451,31 @@ class LabPlannerModule:
         except ImportError:
             pass   # health service not available — manual only
 
+    # ── Uptime helper ──────────────────────────────────────────────────────
+
+    def _get_uptime_pct(self, ip: str, port: str) -> tuple:
+        """Return (label_str, color) for the 24-hour uptime of a host."""
+        port_val = port if port else ""
+        rows = db.execute_query(
+            "SELECT COUNT(*), SUM(online) FROM service_health_log "
+            "WHERE ip_address=? AND port=? "
+            "AND checked_at > datetime('now', '-24 hours')",
+            (ip, port_val)) or []
+        if not rows or not rows[0][0]:
+            return "—", "#888888"
+        total, online_sum = rows[0]
+        if not total:
+            return "—", "#888888"
+        pct = (online_sum or 0) / total * 100
+        label = f"{pct:.0f}%"
+        if pct >= 99:
+            color = "#4CAF50"
+        elif pct >= 90:
+            color = "#FFC107"
+        else:
+            color = "#F44336"
+        return label, color
+
     # ── Build the health-check rows from IPAM ─────────────────────────────
 
     def _build_health_rows(self):
@@ -871,7 +1491,8 @@ class LabPlannerModule:
         hdr = tk.Frame(self._health_inner, bg=self.colors['secondary'])
         hdr.pack(fill=tk.X, pady=(0, 4))
         for txt, w in [("", 28), ("Status", 80), ("Host", 160),
-                       ("IP", 120), ("Port", 60), ("Type", 110), ("Latency", 80)]:
+                       ("IP", 120), ("Port", 60), ("Type", 110),
+                       ("Latency", 80), ("24h Uptime", 90)]:
             tk.Label(hdr, text=txt, width=w//8,
                      font=("Segoe UI", 9, "bold"),
                      bg=self.colors['secondary'], fg=self.colors['text_dim']
@@ -915,11 +1536,19 @@ class LabPlannerModule:
                                bg=self.colors['card_bg'], fg=self.colors['text_dim'])
             lat_lbl.pack(side=tk.LEFT, padx=4)
 
+            up_pct, up_color = self._get_uptime_pct(ip, port or "")
+            up_lbl = tk.Label(row, text=up_pct, width=9,
+                              font=("Segoe UI", 9, "bold"),
+                              bg=self.colors['card_bg'], fg=up_color)
+            up_lbl.pack(side=tk.LEFT, padx=4)
+
             self._health_rows[row_key] = {
                 "dot":     dot,
                 "status":  status_lbl,
                 "latency": lat_lbl,
+                "uptime":  up_lbl,
                 "port":    port,
+                "ip":      ip,
             }
 
     # ── Health service integration ────────────────────────────────────────
@@ -995,6 +1624,11 @@ class LabPlannerModule:
             data["dot"].itemconfig(1, fill="#F44336")
             data["status"].config(text="Offline", fg="#F44336")
             data["latency"].config(text="—")
+        # Refresh uptime % from DB after each check
+        ip   = data.get("ip", key.split(":")[0])
+        port = data.get("port", "")
+        up_pct, up_color = self._get_uptime_pct(ip, port or "")
+        data["uptime"].config(text=up_pct, fg=up_color)
 
     # ═════════════════════════════════════════════════════════════════════════
     # 📓 RUNBOOK / LAB NOTES
@@ -1474,6 +2108,21 @@ class LabPlannerModule:
                  bg=self.colors['background'], fg=self.colors['text'],
                  insertbackground="white", relief=tk.FLAT, width=15
                  ).grid(row=0, column=3, sticky="ew", padx=5)
+        # Row 1 — Run On host selector
+        tk.Label(meta, text="Run On:", bg=self.colors['card_bg'],
+                 fg=self.colors['text'], font=("Segoe UI", 9)
+                 ).grid(row=1, column=0, sticky="w", pady=(6, 0))
+        self.script_run_on_var = tk.StringVar()
+        self._script_run_on_cb = ttk.Combobox(
+            meta, textvariable=self.script_run_on_var,
+            values=self._get_ssh_hosts(),
+            state="readonly", width=22, font=("Segoe UI", 9))
+        self._script_run_on_cb.grid(row=1, column=1, sticky="w", padx=5, pady=(6, 0))
+        tk.Label(meta, text="(host to SSH into when ▶ Run is clicked)",
+                 bg=self.colors['card_bg'], fg=self.colors['text_dim'],
+                 font=("Segoe UI", 8, "italic")
+                 ).grid(row=1, column=2, columnspan=2, sticky="w",
+                        padx=(10, 0), pady=(6, 0))
         meta.columnconfigure(1, weight=1)
         self.script_text = tk.Text(
             right, font=("Consolas", 11), bg="#1E1E1E", fg="#D4D4D4",
@@ -1481,6 +2130,14 @@ class LabPlannerModule:
         self.script_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 4))
         ab = tk.Frame(right, bg=self.colors['card_bg'])
         ab.pack(fill=tk.X, padx=10, pady=(0, 10))
+        tk.Button(ab, text="▶  Run",
+                  bg="#1B5E20", fg="white",
+                  relief=tk.FLAT, cursor="hand2", command=self._run_script
+                  ).pack(side=tk.LEFT, padx=(0, 6))
+        tk.Button(ab, text="🕐  History",
+                  bg=self.colors['card_bg'], fg=self.colors['text'],
+                  relief=tk.FLAT, cursor="hand2", command=self._show_run_history
+                  ).pack(side=tk.LEFT, padx=(0, 6))
         tk.Button(ab, text="📋 Copy to Clipboard",
                   bg=self.colors['primary'], fg="white",
                   relief=tk.FLAT, cursor="hand2", command=self._copy_script
@@ -1516,20 +2173,22 @@ class LabPlannerModule:
             return
         self.current_script_id = iid
         row = db.execute_query(
-            "SELECT title,category,content FROM scripts WHERE id=?",
+            "SELECT title,category,content,run_on FROM scripts WHERE id=?",
             (self.current_script_id,))
         if row:
-            title, cat, content = row[0]
+            title, cat, content, run_on = row[0]
             self.script_title_var.set(title)
             self.script_category_var.set(cat or "")
             self.script_text.delete("1.0", tk.END)
             self.script_text.insert(tk.END, content)
+            self.script_run_on_var.set(run_on or "")
 
     def add_new_script(self):
         self.script_tree.selection_remove(self.script_tree.selection())
         self.current_script_id = None
         self.script_title_var.set("")
         self.script_category_var.set("")
+        self.script_run_on_var.set("")
         self.script_text.delete("1.0", tk.END)
 
     def save_script(self):
@@ -1540,14 +2199,15 @@ class LabPlannerModule:
             messagebox.showwarning("Missing Title",
                 "Script title cannot be empty.", parent=self.parent)
             return
+        run_on = self.script_run_on_var.get().strip()
         if self.current_script_id:
             db.execute_query(
-                "UPDATE scripts SET title=?,category=?,content=? WHERE id=?",
-                (title, category, content, self.current_script_id))
+                "UPDATE scripts SET title=?,category=?,content=?,run_on=? WHERE id=?",
+                (title, category, content, run_on, self.current_script_id))
         else:
             nid = db.execute_query(
-                "INSERT INTO scripts (title,category,content) VALUES (?,?,?)",
-                (title, category, content))
+                "INSERT INTO scripts (title,category,content,run_on) VALUES (?,?,?,?)",
+                (title, category, content, run_on))
             self.current_script_id = str(nid) if nid else None
         self.load_script_data()
         if self.current_script_id:
@@ -1575,3 +2235,297 @@ class LabPlannerModule:
         self.parent.clipboard_append(content)
         messagebox.showinfo("Copied",
             "Script copied to clipboard!", parent=self.parent)
+
+    def _show_run_history(self):
+        """Open a Toplevel showing script execution history from the DB."""
+        from tkinter.scrolledtext import ScrolledText as _ST
+
+        # Decide scope: current script only, or all
+        if self.current_script_id:
+            title_lbl = self.script_title_var.get().strip() or "Selected Script"
+            rows = db.execute_query(
+                "SELECT id, started_at, hostname, exit_code, output "
+                "FROM script_execution_log "
+                "WHERE script_id=? ORDER BY started_at DESC LIMIT 300",
+                (self.current_script_id,)) or []
+            win_title = f"Run History — {title_lbl}"
+            cols = ("started", "host", "result")
+        else:
+            rows = db.execute_query(
+                "SELECT id, started_at, hostname, exit_code, script_title, output "
+                "FROM script_execution_log "
+                "ORDER BY started_at DESC LIMIT 300") or []
+            win_title = "Run History — All Scripts"
+            cols = ("started", "script", "host", "result")
+
+        if not rows:
+            messagebox.showinfo("No History",
+                "No execution history found for this script.",
+                parent=self.parent)
+            return
+
+        root = self.parent.winfo_toplevel()
+        win = tk.Toplevel(root)
+        win.title(win_title)
+        win.geometry("980x560")
+        win.configure(bg=self.colors['background'])
+        win.transient(root)
+
+        # Header
+        tk.Label(win, text=win_title,
+                 font=("Segoe UI", 11, "bold"),
+                 bg=self.colors['card_bg'], fg=self.colors['text'],
+                 anchor="w", padx=12, pady=7).pack(fill=tk.X)
+
+        # Splitter
+        pane = tk.PanedWindow(win, orient=tk.VERTICAL,
+                              bg=self.colors['background'],
+                              sashwidth=5, sashrelief=tk.FLAT)
+        pane.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
+
+        # ── Top: run list ─────────────────────────────────────────────────────
+        top_f = tk.Frame(pane, bg=self.colors['background'])
+        pane.add(top_f, minsize=160)
+
+        tree = ttk.Treeview(top_f, columns=cols, show="headings",
+                            selectmode="browse", height=9)
+        if self.current_script_id:
+            tree.heading("started", text="Started")
+            tree.heading("host",    text="Host")
+            tree.heading("result",  text="Result")
+            tree.column("started", width=200, anchor="w")
+            tree.column("host",    width=220, anchor="w")
+            tree.column("result",  width=110, anchor="center")
+        else:
+            tree.heading("started", text="Started")
+            tree.heading("script",  text="Script")
+            tree.heading("host",    text="Host")
+            tree.heading("result",  text="Result")
+            tree.column("started", width=170, anchor="w")
+            tree.column("script",  width=220, anchor="w")
+            tree.column("host",    width=170, anchor="w")
+            tree.column("result",  width=110, anchor="center")
+
+        vsb = ttk.Scrollbar(top_f, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=vsb.set)
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        output_map: dict = {}
+        for row in rows:
+            if self.current_script_id:
+                rid, started, host, exit_code, output = row
+                script_col = None
+            else:
+                rid, started, host, exit_code, script_title_col, output = row
+                script_col = script_title_col or "?"
+            if exit_code == 0:
+                result = "✅  exit 0"
+            elif exit_code == -2:
+                result = "🛑  cancelled"
+            else:
+                result = f"❌  exit {exit_code}"
+            if self.current_script_id:
+                tree.insert("", tk.END, iid=str(rid),
+                            values=(started or "?", host or "?", result))
+            else:
+                tree.insert("", tk.END, iid=str(rid),
+                            values=(started or "?", script_col,
+                                    host or "?", result))
+            output_map[str(rid)] = output or ""
+
+        # ── Bottom: output viewer ─────────────────────────────────────────────
+        bot_f = tk.Frame(pane, bg=self.colors['background'])
+        pane.add(bot_f, minsize=120)
+
+        tk.Label(bot_f, text="Output",
+                 font=("Segoe UI", 9, "italic"),
+                 bg=self.colors['background'], fg=self.colors['text_dim'],
+                 anchor="w", padx=4).pack(fill=tk.X)
+        out_box = _ST(bot_f, font=("Consolas", 9),
+                      bg="#0D1117", fg="#D4D4D4",
+                      relief=tk.FLAT, padx=8, pady=4,
+                      state=tk.DISABLED)
+        out_box.pack(fill=tk.BOTH, expand=True)
+
+        def _on_select(_evt=None):
+            sel = tree.selection()
+            if not sel:
+                return
+            text = output_map.get(sel[0], "")
+            out_box.config(state=tk.NORMAL)
+            out_box.delete("1.0", tk.END)
+            out_box.insert(tk.END, text)
+            out_box.config(state=tk.DISABLED)
+            out_box.see(tk.END)
+
+        tree.bind("<<TreeviewSelect>>", _on_select)
+
+        # Auto-select first
+        children = tree.get_children()
+        if children:
+            tree.selection_set(children[0])
+            tree.focus(children[0])
+            _on_select()
+
+        # Footer
+        foot = tk.Frame(win, bg=self.colors['background'], pady=6)
+        foot.pack(fill=tk.X, padx=8)
+        tk.Button(foot, text="Close",
+                  bg=self.colors['card_bg'], fg=self.colors['text'],
+                  relief=tk.FLAT, cursor="hand2",
+                  command=win.destroy).pack(side=tk.RIGHT)
+
+    def _prompt_variables(self, content: str) -> tuple:
+        """Scan *content* for {{VAR}} placeholders and prompt the user to fill
+        them in.  Returns (resolved_content, True) on confirm, or ('', False)
+        if the user cancels.  If there are no placeholders, returns immediately
+        without opening a dialog.
+        """
+        names = list(dict.fromkeys(re.findall(r'\{\{(\w+)\}\}', content)))
+        if not names:
+            return content, True
+
+        root = self.parent.winfo_toplevel()
+        win = tk.Toplevel(root)
+        win.title("Script Variables")
+        win.configure(bg=self.colors['background'])
+        win.resizable(False, False)
+        win.transient(root)
+        win.grab_set()
+
+        tk.Label(win, text="Fill in script variables",
+                 font=("Segoe UI", 11, "bold"),
+                 bg=self.colors['card_bg'], fg=self.colors['text'],
+                 anchor="w", padx=12, pady=8).pack(fill=tk.X)
+
+        form = tk.Frame(win, bg=self.colors['background'], padx=16, pady=10)
+        form.pack(fill=tk.X)
+
+        entries: dict = {}
+        for i, name in enumerate(names):
+            tk.Label(form, text=f"{{{{{name}}}}}",
+                     font=("Consolas", 10, "bold"),
+                     bg=self.colors['background'], fg=self.colors['accent'],
+                     anchor="w").grid(row=i, column=0, sticky="w",
+                                      padx=(0, 12), pady=4)
+            var = tk.StringVar()
+            ent = tk.Entry(form, textvariable=var,
+                           font=("Segoe UI", 10),
+                           bg=self.colors['card_bg'], fg=self.colors['text'],
+                           insertbackground=self.colors['text'],
+                           relief=tk.FLAT, bd=6, width=36)
+            ent.grid(row=i, column=1, sticky="ew", pady=4)
+            entries[name] = var
+            if i == 0:
+                ent.focus_set()
+        form.columnconfigure(1, weight=1)
+
+        result = {"ok": False}
+
+        def _confirm():
+            result["ok"] = True
+            win.destroy()
+
+        def _cancel():
+            win.destroy()
+
+        foot = tk.Frame(win, bg=self.colors['background'], pady=8, padx=12)
+        foot.pack(fill=tk.X)
+        tk.Button(foot, text="Run", bg="#1B5E20", fg="white",
+                  relief=tk.FLAT, cursor="hand2",
+                  font=("Segoe UI", 10, "bold"),
+                  command=_confirm).pack(side=tk.RIGHT, padx=(6, 0))
+        tk.Button(foot, text="Cancel",
+                  bg=self.colors['card_bg'], fg=self.colors['text'],
+                  relief=tk.FLAT, cursor="hand2",
+                  command=_cancel).pack(side=tk.RIGHT)
+
+        win.bind("<Return>", lambda _: _confirm())
+        win.bind("<Escape>", lambda _: _cancel())
+
+        # Centre over root
+        win.update_idletasks()
+        rx = root.winfo_rootx() + (root.winfo_width()  - win.winfo_width())  // 2
+        ry = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 2
+        win.geometry(f"+{rx}+{ry}")
+
+        root.wait_window(win)
+
+        if not result["ok"]:
+            return "", False
+
+        resolved = content
+        for name, var in entries.items():
+            resolved = resolved.replace(f"{{{{{name}}}}}", var.get())
+        return resolved, True
+
+    def _run_script(self):
+        """SSH into the selected host and execute the current script."""
+        if not self.current_script_id:
+            messagebox.showwarning("No Script Selected",
+                "Select a script from the list first.", parent=self.parent)
+            return
+        hostname = self.script_run_on_var.get().strip()
+        if not hostname:
+            messagebox.showwarning("No Host Set",
+                "Set a 'Run On' host for this script before running.\n"
+                "Pick a host from the Run On dropdown and save.", parent=self.parent)
+            return
+        content = self.script_text.get("1.0", tk.END).strip()
+        if not content:
+            messagebox.showwarning("Empty Script",
+                "The script has no content to run.", parent=self.parent)
+            return
+        title   = self.script_title_var.get()
+        ip      = self._hostname_to_ip(hostname)
+        if not ip:
+            messagebox.showerror("Host Not Found",
+                f"Could not find an IP for '{hostname}' in IPAM.\n"
+                "Check the Network Mapper tab.", parent=self.parent)
+            return
+
+        # Resolve {{VAR}} placeholders — opens a dialog if any are found
+        content, ok = self._prompt_variables(content)
+        if not ok:
+            return
+
+        def _after_unlock():
+            def _after_cred(username, password):
+                root = self.parent.winfo_toplevel()
+                win  = _SshOutputWindow(root, f"▶  {title}  →  {hostname}", self.colors)
+                win.append_line(f"Connecting to {hostname} ({ip}) as {username}…", "info")
+                win.append_line(f"$ {content[:80]}{'…' if len(content) > 80 else ''}", "info")
+                win.append_line("─" * 60, "info")
+
+                def on_line(line, is_err):
+                    win.append_line(line, "stderr" if is_err else "normal")
+
+                def on_done(exit_code):
+                    output = win.get_all_text()
+                    db.execute_query(
+                        "INSERT INTO script_execution_log "
+                        "(script_id, script_title, hostname, exit_code, output) "
+                        "VALUES (?,?,?,?,?)",
+                        (self.current_script_id, title, hostname, exit_code, output))
+                    if exit_code == 0:
+                        win.set_status("✅  Completed successfully (exit 0)", "#4CAF50")
+                    elif exit_code == -2:
+                        win.set_status("🛑  Cancelled by user", "#FFA726")
+                    else:
+                        win.set_status(f"❌  Failed (exit code {exit_code})", "#F44336")
+
+                def on_channel(channel):
+                    win.set_cancel_cb(channel.close)
+
+                try:
+                    from ssh_service import ssh_execute
+                    ssh_execute(ip, username, password, content,
+                                on_line, on_done, on_channel)
+                except Exception as exc:
+                    win.append_line(f"Error starting SSH: {exc}", "error")
+                    win.set_status("❌  Could not start SSH session", "#F44336")
+
+            self._pick_credential(hostname, ip, _after_cred)
+
+        self._ensure_vault_unlocked(_after_unlock)

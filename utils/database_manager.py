@@ -148,6 +148,35 @@ def init_db():
         ON service_health_log (ip_address, checked_at DESC)
     ''')
 
+    # ── Phase 2 migrations ────────────────────────────────────────────────────
+    # run_on: which IPAM host to SSH into when running a script
+    try:
+        cursor.execute("ALTER TABLE scripts ADD COLUMN run_on TEXT DEFAULT ''")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists
+
+    # deploy_target: which IPAM host to deploy a Docker stack to
+    try:
+        cursor.execute(
+            "ALTER TABLE docker_stacks ADD COLUMN deploy_target TEXT DEFAULT ''")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists
+
+    # ── Script Execution Log ──────────────────────────────────────────────────
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS script_execution_log (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            script_id    INTEGER,
+            script_title TEXT,
+            hostname     TEXT,
+            exit_code    INTEGER,
+            output       TEXT,
+            started_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     conn.commit()
     conn.close()
 

@@ -40,6 +40,9 @@ lxml>=4.9.0
 # Credentials Vault encryption (v1.12.7+)
 cryptography>=42.0.0   # Fernet symmetric encryption for vault passwords
 
+# SSH remote execution & Docker deploy (v1.14.0+)
+paramiko>=3.4.0        # SSH/SFTP client for Script Vault Run and Docker Deploy
+
 # Build Tools
 pyinstaller>=6.0.0 # For building standalone executables
 
